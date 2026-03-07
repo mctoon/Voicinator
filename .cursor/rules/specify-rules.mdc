@@ -1,0 +1,35 @@
+---
+description: Project Development Guidelines
+globs: ["**/*"]
+alwaysApply: true
+---
+
+# Voicinator Development Guidelines
+
+Auto-generated from all feature plans. Last updated: 2026-03-07
+
+## Active Technologies
+
+- Python 3.x (e.g. 3.11+); version documented in run.sh and requirements.tx + See research.md; likely FastAPI or Flask for search API, SQLAlchemy or async equivalent for DB, PostgreSQL client; embedding/vector lib for meaning-based tier (012-phrase-search-tiers)
+
+## Project Structure
+
+```text
+src/
+tests/
+```
+
+## Commands
+
+cd src [ONLY COMMANDS FOR ACTIVE TECHNOLOGIES][ONLY COMMANDS FOR ACTIVE TECHNOLOGIES] pytest [ONLY COMMANDS FOR ACTIVE TECHNOLOGIES][ONLY COMMANDS FOR ACTIVE TECHNOLOGIES] ruff check .
+
+## Code Style
+
+Python 3.x (e.g. 3.11+); version documented in run.sh and requirements.tx: Follow standard conventions
+
+## Recent Changes
+
+- 012-phrase-search-tiers: Added Python 3.x (e.g. 3.11+); version documented in run.sh and requirements.tx + See research.md; likely FastAPI or Flask for search API, SQLAlchemy or async equivalent for DB, PostgreSQL client; embedding/vector lib for meaning-based tier
+
+<!-- MANUAL ADDITIONS START -->
+<!-- MANUAL ADDITIONS END -->

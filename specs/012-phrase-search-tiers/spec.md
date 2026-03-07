@@ -105,6 +105,7 @@ The system stores transcript content at the segment level (each contiguous stret
 
 ## Assumptions
 
+- Implementation follows project [docs/CODING_STANDARDS.md](../../docs/CODING_STANDARDS.md) (naming, DB table/column conventions, Python style, run.sh + requirements.txt, small functions/files).
 - The searchable voice database (see feature 009) exists and stores media, speakers, and their associations; this feature extends it with three search tiers and segment-level storage requirements for phrase and meaning-based search.
 - Transcript and diarization output from the pipeline provides segment-level text and speaker per segment; ingestion into the database preserves that granularity.
 - "Speaker" is a stable identity (e.g. by internal id); scope "list of speakers" and "one speaker" refer to that identity.
