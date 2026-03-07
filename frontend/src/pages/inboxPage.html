@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Inbox Queue</title>
+  <link rel="stylesheet" href="/styles/main.css">
+</head>
+<body>
+  <header class="page-header">
+    <h1>Inbox Queue</h1>
+  </header>
+  <main class="page-main">
+    <div id="tabsContainer" class="tabs-container"></div>
+    <section class="channels-section">
+      <h2>Channels</h2>
+      <div id="channelList" class="channel-list-wrap"></div>
+      <div id="channelPagination" class="pagination"></div>
+      <div id="message" class="message" aria-live="polite"></div>
+    </section>
+  </main>
+  <script src="/services/apiClient.js"></script>
+  <script src="/components/tabBar.js"></script>
+  <script src="/components/channelList.js"></script>
+  <script src="/pages/inboxPage.js"></script>
+</body>
+</html>

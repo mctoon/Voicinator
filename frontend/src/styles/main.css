@@ -1,0 +1,18 @@
+/* Inbox Queue UI */
+.page-header { margin-bottom: 1rem; }
+.tab-bar { display: flex; gap: 0.25rem; margin-bottom: 1rem; }
+.tab-btn.active { font-weight: bold; }
+.page-main { max-width: 60rem; margin: 0 auto; padding: 0 1rem; }
+.channel-list { list-style: none; padding: 0; }
+.channel-item { display: flex; align-items: center; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid #eee; }
+.channel-name.source { color: #666; }
+.channel-actions { display: flex; gap: 0.5rem; }
+.channel-actions button { cursor: pointer; }
+.pagination { display: flex; align-items: center; gap: 1rem; margin-top: 1rem; }
+.message { margin-top: 0.5rem; }
+.message.error { color: #c00; }
+.empty-state { color: #666; font-style: italic; }
+.media-subpanel { margin-bottom: 1rem; }
+.media-subpanel video { max-width: 100%; }
+.media-controls { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.5rem; }
+.media-unsupported { color: #c00; }
