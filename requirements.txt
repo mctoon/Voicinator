@@ -1,0 +1,5 @@
+# Inbox-queue web UI (001). Python 3.11+
+Flask>=3.0
+tomli>=2.0; python_version < "3.11"
+ruff>=0.1
+# path handling: pathlib in stdlib; config: TOML via tomli or tomllib (3.11+)

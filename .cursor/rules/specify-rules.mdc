@@ -9,6 +9,8 @@ alwaysApply: true
 Auto-generated from all feature plans. Last updated: 2026-03-07
 
 ## Active Technologies
+- Python 3.x (e.g. 3.11+); version documented in run.sh and requirements.tx + See research.md; backend: Flask or FastAPI for API and static/template serving; frontend: HTML/CSS/JS (or light framework per research); libraries for path handling, config (e.g. TOML/JSON), logging (001-inbox-queue-web-ui)
+- Config file (paths, tab names, one or two paths per tab); no database; filesystem only for channel folders and file moves (001-inbox-queue-web-ui)
 
 - Python 3.x (e.g. 3.11+); version documented in run.sh and requirements.tx + See research.md; likely FastAPI or Flask for search API, SQLAlchemy or async equivalent for DB, PostgreSQL client; embedding/vector lib for meaning-based tier (012-phrase-search-tiers)
 
@@ -28,6 +30,7 @@ cd src [ONLY COMMANDS FOR ACTIVE TECHNOLOGIES][ONLY COMMANDS FOR ACTIVE TECHNOLO
 Python 3.x (e.g. 3.11+); version documented in run.sh and requirements.tx: Follow standard conventions
 
 ## Recent Changes
+- 001-inbox-queue-web-ui: Added Python 3.x (e.g. 3.11+); version documented in run.sh and requirements.tx + See research.md; backend: Flask or FastAPI for API and static/template serving; frontend: HTML/CSS/JS (or light framework per research); libraries for path handling, config (e.g. TOML/JSON), logging
 
 - 012-phrase-search-tiers: Added Python 3.x (e.g. 3.11+); version documented in run.sh and requirements.tx + See research.md; likely FastAPI or Flask for search API, SQLAlchemy or async equivalent for DB, PostgreSQL client; embedding/vector lib for meaning-based tier
 
