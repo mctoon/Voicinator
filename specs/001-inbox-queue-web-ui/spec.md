@@ -31,7 +31,7 @@ The operator opens the web UI and sees a list of all YouTube channel folders (ac
 
 **Acceptance Scenarios**:
 
-1. **Given** one or more configured base folders, **When** the user opens the web UI, **Then** the system lists all channel folders (e.g. one entry per "[Base]/[YouTube channel]" that has a "Videos not transcribed" path).
+1. **Given** one or more configured base folders, **When** the user opens the web UI, **Then** the system lists all channel folders that have a "Videos not transcribed" path (inbox). A channel is eligible for listing if it has that folder only; "Videos 1 to be transcribed" need not exist yet.
 2. **Given** the list of channel folders, **When** the user chooses to move 3 files for a channel, **Then** the system moves up to 3 media files (and their paired folders, if any) from that channel's "Videos not transcribed" to that channel's "Videos 1 to be transcribed".
 3. **Given** the list of channel folders, **When** the user chooses to move all files for a channel, **Then** the system moves all media files (and their paired folders) from that channel's "Videos not transcribed" to that channel's "Videos 1 to be transcribed".
 4. **Given** the list of channel folders, **When** the user chooses to explore a channel, **Then** the system shows all media files in that channel's "Videos not transcribed", and the user can select which ones to queue; when the user confirms, the system moves only the selected files (and their paired folders) to "Videos 1 to be transcribed".
@@ -107,9 +107,10 @@ A tab may be configured with two paths instead of one. When two paths are specif
 ### Edge Cases
 
 - What happens when a channel has fewer than 3 files? "Move 3 files" moves only the files that exist (up to 3).
-- What happens when "Videos 1 to be transcribed" or "Videos not transcribed" is missing for a channel? The system MUST NOT create folders automatically in this feature; it MUST hide the channel so the operator is not misled.
+- What happens when "Videos not transcribed" is missing for a channel? The channel is hidden (not listed). What happens when "Videos 1 to be transcribed" is missing? The channel is still listed (eligibility requires only "Videos not transcribed"). When the user moves media into that channel, the system MUST create "Videos 1 to be transcribed" (and any other pipeline folders needed) if they do not exist so that the move succeeds.
 - What happens when two operators queue the same file at the same time? The system MUST move the file at most once; duplicate moves are avoided (e.g. move is atomic or idempotent).
-- What happens when a media file has a paired folder (same base name)? When moving the media file, the paired folder moves with it so they stay together.
+- What happens when a media file has a paired folder (same base name)? When moving the media file, the paired folder moves with it so they stay together. The sidecar (paired) folder is created at the destination if it does not exist.
+- What happens when a media file has sister files (same prefix)? When moving the media file, the system MUST move all sister files into the sidecar folder (same base name as the primary). The sidecar folder is created if it does not exist, so sister files (e.g. .info.json, -thumb.jpg) end up inside it alongside the queue directory.
 - What happens when a tab has two paths and the same channel name exists under both source and destination? The system MUST treat them as the same logical channel for queuing: files from source "[Channel]" move to destination "[Channel]" "Videos 1 to be transcribed". Merged list display MUST make clear which path each file or channel belongs to when both paths are shown.
 - What happens when the user has not named a tab? The system displays a default (e.g. path or "Path 1") so the tab is still usable.
 - What happens when the selected media file cannot be played in the sub window (e.g. unsupported format)? The sub window shows a clear message; the user can still queue the file.
@@ -134,12 +135,14 @@ A tab may be configured with two paths instead of one. When two paths are specif
 
 ### Functional Requirements
 
-- **FR-001**: System MUST list all channel folders that contain a "Videos not transcribed" path, across all configured base folders, so the user can see every channel that has inbox media.
+- **FR-001**: System MUST list all channel folders that contain a "Videos not transcribed" path (inbox), across all configured base folders. Eligibility requires only that the inbox folder exist; "Videos 1 to be transcribed" need not exist. So the user sees every channel that has inbox media.
 - **FR-002**: System MUST provide an option to "move 3 files" per channel: when the user selects it, the system moves up to 3 media files (and their paired folders) from that channel's "Videos not transcribed" to that channel's "Videos 1 to be transcribed".
 - **FR-003**: System MUST provide an option to "move all files" per channel: when the user selects it, the system moves all media files (and their paired folders) from that channel's "Videos not transcribed" to that channel's "Videos 1 to be transcribed".
 - **FR-004**: System MUST provide an "explore" option per channel that shows all media files in that channel's "Videos not transcribed".
 - **FR-005**: In the explore view, the user MUST be able to select one or more files and trigger "queue selected"; the system MUST then move only the selected media files (and their paired folders) to that channel's "Videos 1 to be transcribed".
-- **FR-006**: When moving a media file, the system MUST move its paired folder (folder with same base name as the media file) to the same destination so they remain together.
+- **FR-006**: When moving a media file, the system MUST move its paired folder (sidecar folder with same base name as the media file) to the same destination so they remain together. The sidecar folder MUST be created if it does not exist (e.g. so sister files have a place to go).
+- **FR-006a**: When moving a media file, the system MUST move all sister files into the sidecar folder (the folder with the same base name as the primary): any file in the same directory whose name starts with the primary file’s stem goes into that folder. Examples: stem.info.json and stem-thumb.jpg are moved into the sidecar folder (created if missing), keeping metadata and thumbnails with the media.
+- **FR-006b**: When moving media into a channel's queue, the system MUST create "Videos 1 to be transcribed" (and any other pipeline folders used for the destination) if they do not exist, so that the move always succeeds without requiring the operator to create folders manually.
 - **FR-007**: Processing pipeline MUST treat only "Videos 1 to be transcribed" as the queue for processing; files in "Videos not transcribed" MUST NOT be picked up for processing by default.
 - **FR-008**: When the user is viewing the list of media for a channel (explore view), the system MUST provide a sub window where the user can view or play the selected media, with controls for play/pause, volume, scrubbing (seek), and jump forward/back.
 - **FR-009**: The interface MUST be tabbed so that each configured path has its own tab; the user MUST be able to name the tab when defining or editing the path, and that name MUST be displayed as the tab label.
@@ -150,9 +153,10 @@ A tab may be configured with two paths instead of one. When two paths are specif
 
 ### Key Entities
 
-- **Channel folder**: A directory representing a source (e.g. YouTube channel); contains "Videos not transcribed" (inbox) and "Videos 1 to be transcribed" (queue).
-- **Media file**: Primary audio or video file; may have a paired folder of the same base name.
-- **Paired folder**: Folder with same base name as the media file; holds the media and sister files; moves with the media when queued.
+- **Channel folder**: A directory representing a source (e.g. YouTube channel). For listing, it need only contain "Videos not transcribed" (inbox). When moving media, the system uses or creates "Videos 1 to be transcribed" (queue) and any other pipeline folders as needed.
+- **Media file**: Primary audio or video file; may have a paired folder of the same base name and sister files with the same prefix.
+- **Paired folder (sidecar)**: Folder with same base name as the media file; created at destination if it does not exist. Sister files are placed inside it; if it already exists at source, it is moved and sister files go into it.
+- **Sister files**: Files in the same directory whose name starts with the primary file’s stem; they MUST be moved into the sidecar folder (created if missing) so metadata and thumbnails stay with the media.
 - **Configured path (base path)**: A root path under which channel folders (e.g. "[Channel]/Videos not transcribed") are discovered; each path may have an optional tab name. A tab may have one path or two sister paths (source and destination).
 - **Source path / destination path**: When a tab has two paths, the first is the source (inbox only; files queued from here move to the destination); the second is the destination (queue and pipeline run here only).
 
@@ -164,7 +168,7 @@ A tab may be configured with two paths instead of one. When two paths are specif
 
 - **SC-001**: Operators can see all channel folders with inbox media in one place and choose to queue 3 files, all files, or cherry-pick after exploring, without using the file system directly.
 - **SC-002**: Only files that have been explicitly moved to "Videos 1 to be transcribed" (via this UI or an equivalent action) are eligible for processing; files left in "Videos not transcribed" are not processed.
-- **SC-003**: No media or paired folders are lost or split when moving; each moved media file and its paired folder remain together in "Videos 1 to be transcribed".
+- **SC-003**: No media, paired folders, or sister files are lost or split when moving; each moved media file, its paired folder, and all sister files (same prefix) remain together in "Videos 1 to be transcribed".
 - **SC-004**: When viewing the list of media for a channel, operators can preview a selected file in a sub window using play/pause, volume, scrubbing, and jump forward/back without leaving the page.
 - **SC-005**: When multiple paths are configured, each path has its own tab and tabs can be named by the user so different channel types (e.g. different YouTube channels) are easy to distinguish.
 - **SC-006**: When a tab is configured with source and destination paths, queued files move from source inbox to destination queue and the pipeline runs only in the destination path; the merged list shows media from both paths so the operator can queue from either.

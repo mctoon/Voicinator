@@ -59,11 +59,11 @@ A directory representing a channel (e.g. YouTube channel) under a base path. Has
 | source vs destination | `bIsSource`          | Boolean; when tab has two paths, true if this channel is under source path |
 | tab id / index      | `iTabIndex` or `sTabId` | Identifies which tab this channel is shown under |
 
-**Validation**: Only include channel folders where both inbox and queue paths exist on disk; do not create folders. Hide channel if either path is missing.
+**Validation**: Include channel folders that have an inbox path ("Videos not transcribed") on disk. Queue path ("Videos 1 to be transcribed") may not exist yet; it is derived and created on move if missing. Hide channel only if inbox path is missing.
 
 ### MediaFile
 
-A media file in a channel's inbox (or queue). May have a paired folder (same base name).
+A media file in a channel's inbox (or queue). May have a paired folder (same base name) and sister files (same prefix).
 
 | Attribute (logical) | Variable / JSON field | Type / Notes |
 |---------------------|------------------------|---------------|
@@ -72,7 +72,7 @@ A media file in a channel's inbox (or queue). May have a paired folder (same bas
 | paired folder path  | `sPairedFolderPath`    | Optional; folder with same base name; move with file when queuing |
 | duration            | `iDurationSeconds` or `lDurationMs` | Optional; if available for UI (e.g. from metadata) |
 
-**Validation**: When moving, move media file and paired folder together; if paired folder exists, include it in move operation.
+**Validation**: When moving, create the sidecar folder (same base name as primary) at destination if it does not exist; move sister files into the sidecar folder; move paired folder (if it exists at source) or its contents into the sidecar; move the primary file into the queue directory (alongside the sidecar).
 
 ### MoveResult (API response)
 
@@ -90,9 +90,9 @@ Result of a single move or batch move.
 
 ## State transitions (move flow)
 
-1. **List channels** (per tab): Scan configured path(s); for each directory under path that has both "Videos not transcribed" and "Videos 1 to be transcribed", emit ChannelFolder. When two paths, merge channels from both; mark source vs destination.
+1. **List channels** (per tab): Scan configured path(s); for each directory under path that has "Videos not transcribed", emit ChannelFolder (queue path derived; need not exist yet). When two paths, merge channels from both; mark source vs destination.
 2. **List files** (per channel): List media files in channel's inbox path; for each file, resolve paired folder (same base name); emit MediaFile list (paginated or virtualized).
-3. **Move 3 / move all / queue selected**: For each selected file (or up to 3, or all): atomic move (or copy-then-delete) of media file and paired folder from inbox path to queue path. When tab has source + destination, move from source inbox to destination queue. Idempotent: if already moved, treat as success. Log success and failures.
+3. **Move 3 / move all / queue selected**: For each selected file (or up to 3, or all): ensure queue path exists (create if missing); create sidecar folder (queue path + primary stem) if missing; move sister files into sidecar folder; move source paired folder (if any) into destination sidecar; move primary file into queue path. When tab has source + destination, move from source inbox to destination queue. Idempotent: if already moved, treat as success. Log success and failures.
 
 ---
 

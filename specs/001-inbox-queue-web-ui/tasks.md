@@ -141,10 +141,14 @@
 
 - [x] T036 Ensure move actions and failures are logged (what moved, from path, to path; error reason) per FR-013 in backend/src/services/moveService.py and/or API layer.
 - [x] T037 [P] Add explicit empty state when no tabs or config missing (e.g. message to configure paths) in frontend.
-- [x] T038 Validate edge cases: move 3 with fewer than 3 files moves only existing; channel with missing inbox or queue hidden; idempotent move (already moved counts as success); paired folder moves with media in move service and API.
+- [x] T038 Validate edge cases: move 3 with fewer than 3 files moves only existing; channel hidden only when inbox missing (queue may be missing; created on move); idempotent move (already moved counts as success); paired folder moves with media in move service and API.
 - [x] T039 Run quickstart.md: run.sh, open UI, verify tabs, channels, move 3, explore, media subpanel, and two-path behavior if configured.
 - [x] T040 [P] Create master config file at repo base (voicinator.toml) with [server] port and optional [inbox] configPath; add voicinator.toml.example at repo root.
 - [x] T041 Load master config in backend (backend/src/models/masterConfigModel.py or configModel), use server.port in backend/__main__.py and optional inbox.configPath in backend/src/services/configService.py for bootstrap.
+- [x] T042 Eligibility: list channel if it has only "Videos not transcribed" (inbox); remove requirement for "Videos 1 to be transcribed" in backend/src/services/channelScanService.py.
+- [x] T043 Pipeline folders: ensure queue path (and parents) are created when moving if they do not exist in backend/src/services/moveService.py (mkdir parents exist_ok).
+- [x] T044 Move sister files (same prefix): when moving a media file, discover and move all files in same directory whose name starts with primary's stem (e.g. .info.json, -thumb.jpg) in backend/src/services/moveService.py.
+- [x] T045 Create sidecar folder at destination if missing; move sister files and source paired folder contents into sidecar (not next to primary) in backend/src/services/moveService.py.
 
 ---
 
@@ -216,8 +220,8 @@
 | US3 (P2)    | T025–T028  | 4     |
 | US4 (P2)    | T029–T031  | 3     |
 | US5 (P2)    | T032–T035  | 4     |
-| Polish      | T036–T041  | 6     |
-| **Total**   |            | **41**|
+| Polish      | T036–T044  | 9     |
+| **Total**   |            | **44**|
 
 **Format validation**: All tasks use checklist format `- [ ] [TaskID] [P?] [Story?] Description with file path`.  
 **Independent test criteria**: Each user story phase includes an Independent Test from spec.md.

@@ -57,7 +57,7 @@ From the repository root:
 
 - **Master config**: `voicinator.toml` at repo root (see `voicinator.toml.example`). Sets `[server] port` (default 8027) and optional `[inbox] configPath` for the inbox tabs config file.
 - **Inbox config file**: TOML or JSON (see research.md and data-model.md). Define tabs; each tab has optional display name and one or two paths (source, optional destination). Path from master config, `INBOX_CONFIG` env, or default `inbox_queue_config.toml` at repo root.
-- **Paths**: Base paths under which channel folders are discovered. Each channel folder must contain "Videos not transcribed" and "Videos 1 to be transcribed"; channels missing either are hidden.
+- **Paths**: Base paths under which channel folders are discovered. A channel is listed if it has "Videos not transcribed"; "Videos 1 to be transcribed" need not exist (it is created when moving media into that channel).
 
 ---
 

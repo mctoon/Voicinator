@@ -3,6 +3,8 @@
 
 [server]
 port = 8027
+# Optional: log file path. If unset, uses logs/voicinator.log under repo root.
+# logPath = "logs/voicinator.log"
 
 # Optional: path to inbox-queue tabs config. If unset, uses INBOX_CONFIG env or default path.
 # [inbox]

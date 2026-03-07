@@ -2,9 +2,13 @@
 """GET /api/inbox/tabs — return tabId, tabName, pathCount per contract."""
 from __future__ import annotations
 
+import logging
+
 from flask import Blueprint, jsonify
 
 from backend.src.services.configService import getConfigPath, getTabs
+
+logger = logging.getLogger(__name__)
 
 
 def register(bp: Blueprint) -> None:
@@ -12,6 +16,7 @@ def register(bp: Blueprint) -> None:
     def getTabsRoute():
         sConfigPath = getConfigPath()
         tabsList = getTabs(sConfigPath)
+        logger.info("GET tabs configPath=%s count=%s", sConfigPath, len(tabsList))
         out = [
             {"tabId": t.get("tabId", ""), "tabName": t.get("tabName", ""), "pathCount": t.get("pathCount", 1)}
             for t in tabsList

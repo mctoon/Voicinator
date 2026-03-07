@@ -28,12 +28,11 @@ async function postMove(body) {
 }
 
 async function getFiles(tabId, channelId, limit = 100, offset = 0) {
-  const params = new URLSearchParams({ limit, offset });
-  const r = await fetch(
-    `${apiBase}/tabs/${encodeURIComponent(tabId)}/channels/${encodeURIComponent(channelId)}/files?${params}`
-  );
-  if (!r.ok) throw new Error('Failed to fetch files');
-  return r.json();
+  const params = new URLSearchParams({ channelId, limit, offset });
+  const r = await fetch(`${apiBase}/tabs/${encodeURIComponent(tabId)}/files?${params}`);
+  const data = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(data.error || 'Failed to fetch files');
+  return data;
 }
 
 function mediaUrl(path) {

@@ -59,21 +59,22 @@ No request body. Empty list if config has no tabs.
 | isSource     | bool   | True when tab has two paths and this channel is under source |
 | tabId        | string | Tab this channel belongs to |
 
-**Validation**: Only channels where both inbox and queue paths exist; 404 if tabId unknown.
+**Validation**: Only channels where the inbox path exists; queue path may not exist yet (created on move). 404 if tabId unknown.
 
 ---
 
 ## 3. Get files (per channel, paginated)
 
-**Endpoint**: `GET /tabs/{tabId}/channels/{channelId}/files` or `GET /api/inbox/files`
+**Endpoint**: `GET /tabs/{tabId}/files?channelId=...` or `GET /api/inbox/tabs/{tabId}/files?channelId=...`
 
-**Query**: Either path-based (e.g. `inboxPath=...` and optional `tabId`) or `channelId` + `tabId`. Implementation may use channel key (e.g. base path + channel name) as channelId.
+**Query**: `channelId` is required (channel key: base path + ":" + channel name). Passed as query parameter so path segments in channelId do not break routing.
 
 **Query parameters**:
-| Name   | Type | Default | Description |
-|--------|------|---------|-------------|
-| limit  | int  | e.g. 100 | Max files to return |
-| offset | int  | 0        | Skip this many |
+| Name      | Type | Default | Description |
+|-----------|------|---------|-------------|
+| channelId | string | required | Channel key (e.g. basePath:channelName) |
+| limit     | int  | e.g. 100 | Max files to return |
+| offset    | int  | 0        | Skip this many |
 
 **Response**: JSON object:
 - `files`: array of media file objects (see data-model MediaFile).

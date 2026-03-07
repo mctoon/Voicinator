@@ -2,12 +2,16 @@
 """POST /api/inbox/move — move3, moveAll, queueSelected."""
 from __future__ import annotations
 
+import logging
+
 from flask import Blueprint, jsonify, request
 
+from backend.src.services.channelScanService import getChannelId, scanChannelsForTab
 from backend.src.services.configService import getConfigPath, getTabs
-from backend.src.services.channelScanService import scanChannelsForTab, getChannelId
 from backend.src.services.fileListService import listMediaFiles
 from backend.src.services.moveService import moveBatch
+
+logger = logging.getLogger(__name__)
 
 
 def register(bp: Blueprint) -> None:
@@ -36,9 +40,11 @@ def register(bp: Blueprint) -> None:
         channelsList = scanChannelsForTab(pathsList, str(tabId))
         channelDict = next((c for c in channelsList if getChannelId(c) == channelId), None)
         if not channelDict:
+            logger.warning("POST move channel not found tabId=%s channelId=%s", tabId, channelId)
             return jsonify({"error": "Channel not found"}), 404
 
         sQueuePath = channelDict.get("queuePath") or ""
+        logger.info("POST move action=%s tabId=%s channelId=%s queuePath=%s", action, tabId, channelId, sQueuePath)
         if not sQueuePath:
             return jsonify({"success": False, "movedCount": 0, "errors": ["No queue path"]}), 200
 

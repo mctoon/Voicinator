@@ -25,7 +25,7 @@ def getConfigPath() -> str:
         if path.is_absolute() and path.exists():
             return sOverride
         try:
-            root = Path(__file__).resolve().parents[4]
+            root = Path(__file__).resolve().parents[3]
             candidate = root / sOverride
             if candidate.exists():
                 return str(candidate)
@@ -36,7 +36,7 @@ def getConfigPath() -> str:
     if sPath:
         return sPath
     try:
-        root = Path(__file__).resolve().parents[4]
+        root = Path(__file__).resolve().parents[3]
         for name in ("inbox_queue_config.toml", "inbox_queue_config.json", "settings/inbox_queue_config.toml"):
             candidate = root / name
             if candidate.exists():

@@ -1,7 +1,8 @@
 # Python 3.x
 """
-Channel scan: given tab/paths, scan for dirs with both inbox and queue folders;
-return ChannelFolder list; hide channels missing either path; support one or two paths per tab.
+Channel scan: given tab/paths, scan for dirs that have "Videos not transcribed" (inbox).
+Eligibility requires only the inbox folder; queue path is derived and created on move if missing.
+Support one or two paths per tab; when two paths, merge channels and set isSource.
 """
 from __future__ import annotations
 
@@ -13,9 +14,10 @@ QUEUE_DIR = "Videos 1 to be transcribed"
 
 def scanChannelsForTab(pathsList: list[str], sTabId: str) -> list[dict]:
     """
-    Scan one or two base paths for channel folders. Each channel dir must contain
-    both INBOX_DIR and QUEUE_DIR. When two paths, merge channels and set isSource.
-    Returns list of channel dicts: channelName, basePath, inboxPath, queuePath, isSource, tabId.
+    Scan one or two base paths for channel folders. A channel is included if it has
+    INBOX_DIR; QUEUE_DIR need not exist (it is created on move). When two paths,
+    merge channels and set isSource. Returns list of channel dicts: channelName,
+    basePath, inboxPath, queuePath, isSource, tabId.
     """
     seenNames: set[str] = set()
     resultList: list[dict] = []
@@ -35,9 +37,9 @@ def scanChannelsForTab(pathsList: list[str], sTabId: str) -> list[dict]:
                 continue
             sChannelName = entry.name
             inboxPath = entry / INBOX_DIR
-            queuePath = entry / QUEUE_DIR
-            if not inboxPath.is_dir() or not queuePath.is_dir():
+            if not inboxPath.is_dir():
                 continue
+            queuePath = entry / QUEUE_DIR
             key = f"{sBase}:{sChannelName}"
             if key in seenNames:
                 continue
