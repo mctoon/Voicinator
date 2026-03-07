@@ -103,3 +103,41 @@ From test file processing:
 ---
 
 *Test data documented for development phase*
+
+## Flerf Whisperer Update - 2026-03-05 **C C (Chris Westchester NY)**
+
+**Status: RESOLVED / ENHANCED**
+
+- Researched C C folder: 2000+ videos/transcripts available
+- Confirmed Chris (NY accent, driving recordings)
+- **New Test Resources:** All .txt files in Videos/ (ground truth, timestamps)
+- Examples:
+  | File | Notes |
+  |------|-------|
+  | (Rated R for language) Ricers rant... .txt | Angry rant, noisy |
+  | 1100-200 on our Flat-earth.txt | Short monologue |
+  | 1876 on our Flat-earth.txt | Historical claims |
+  | 2025-03-29-"Lost technology" on our Flat-earth.txt | Recent, tech claims |
+
+- **Recommendation:** Enroll "Chris Westchester County" as baseline speaker for DER/WER testing
+- Flerf summary: /volumes/2tb/sync/flat/flerfs/C C/summary.md
+
+**Collection Status: READY FOR BATCH PROCESSING**
+
+## Flerf Whisperer Update - 2026-03-06 **Mark Sargent (Flat Earth Clues)**
+
+**Status: ENHANCED / NEW TEST DATA**
+
+- Researched `/Volumes/2tb/sync/flat/flerfs/Mark Sargent`: 1893 videos + transcripts
+- **Identity Confirmed:** Mark Sargent, Seattle WA, FE pioneer
+- **New Test Resources:**
+  | File | Notes |
+  |------|-------|
+  | 2025-02-27-Flat Earth Clues interview 444 Texas high school classes 1 & 2 [5Kw3AldyYmk].txt | Interview, multi-speaker (Mark + students), 86KB, timestamps |
+  | 2025-03-05-Strange World 502 Special guest Shane St Pierre - DJ Curious Lisbeth Acosta & Mark Sargent [kTaTA3bsUDw].txt | Podcast, multiple guests, 137KB |
+  | 2025-02-14-Flat Earth Clues interview 443 Tin Foil Hat Sombrero [Utx7vrBfe7g].txt | Interview, 138KB |
+
+- **Voice FP Recommendation:** Enroll "Mark Sargent" profile - distinctive voice, many samples
+- **Summary:** /Volumes/2tb/sync/flat/flerfs/Mark Sargent/summary.md
+
+**Collection Status: READY FOR BATCH PROCESSING**

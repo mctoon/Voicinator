@@ -1,0 +1,21 @@
+---
+description: Code style agent — follow project coding standards (docs/CODING_STANDARDS.md)
+globs: "**/*.py,**/*.ts,**/*.tsx,**/*.js,**/*.jsx,**/*.md"
+alwaysApply: false
+---
+
+# Code style agent
+
+When editing or generating code in this project, **follow the project coding standards**.
+
+**Authority:** Read and apply [docs/CODING_STANDARDS.md](docs/CODING_STANDARDS.md) (project root). That file is the source of truth for style and naming.
+
+## Quick reference (from CODING_STANDARDS.md)
+
+- **Braces:** Allman style (opening brace on its own line).
+- **Naming:** camelCase; Hungarian where appropriate: `m_` member, `s_` static, `g_` global; single-letter for primitives (e.g. `i` int, `s` string); suffixes `List`, `Dict`, `Set`, `Tuple` for collections.
+- **DB:** Table names `t` + camelCase (e.g. `tChannel`); columns camelCase; timestamps 64-bit ms since 1970.
+- **Python:** `# Python 3.x` at top; one statement per line; pydoc on modules and public functions.
+- **Layout:** Prefer small functions and multiple smaller files.
+
+If anything here conflicts with docs/CODING_STANDARDS.md, the file wins. When in doubt, read the full doc.
