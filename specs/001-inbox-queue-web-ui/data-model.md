@@ -6,9 +6,24 @@ Entities and data shapes for the inbox-queue feature. No database: config file p
 
 ---
 
-## Config (file-backed)
+## Master config (bootstrap, repo base)
 
-Loaded at startup (and optionally on reload). Format TOML or JSON per research.md.
+Single file at repository base (e.g. `voicinator.toml`) used to bootstrap the app. Loaded first.
+
+| Section / key   | Purpose |
+|-----------------|---------|
+| `[server]`      | Web server options |
+| `server.port`  | Port number (integer); default e.g. 8027 |
+| `[inbox]`      | Optional; inbox-queue feature |
+| `inbox.configPath` | Optional path to inbox tabs config; if missing, use INBOX_CONFIG env or default path |
+
+**Validation**: If file missing, use defaults (port 8027, inbox path per existing rules). Format TOML.
+
+---
+
+## Config (file-backed, inbox tabs)
+
+Loaded at startup (and optionally on reload). Path from master config, env, or default. Format TOML or JSON per research.md.
 
 ### TabConfig
 

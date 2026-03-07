@@ -32,6 +32,16 @@
 
 ---
 
+## 3b. Master config (bootstrap, repo base)
+
+**Decision**: Use a **single master config file** at repository base (e.g. `voicinator.toml`) for bootstrap options: web server port, optional path to inbox tabs config. App loads this first; missing file uses defaults (port 8027, existing inbox path resolution).
+
+**Rationale**: One place to set port and feature config paths; future features can add sections without new env vars or files.
+
+**Alternatives considered**: Env-only (PORT, INBOX_CONFIG) — keep; master config overrides or supplies defaults. Multiple config files per feature — rejected for bootstrap; one master keeps entry point clear.
+
+---
+
 ## 4. Serving media for the subpanel (preview)
 
 **Decision**: Backend exposes a **streaming or URL endpoint** that serves the selected media file (or a local file path the frontend can use with a `file://`-like URL only when same-origin or via a safe stream endpoint). Prefer **HTTP range request** streaming so the browser can play and seek without loading the whole file.

@@ -13,7 +13,7 @@ Provide a local-only web UI so an operator can see all YouTube channel folders (
 
 **Language/Version**: Python 3.x (e.g. 3.11+); version documented in run.sh and requirements.txt  
 **Primary Dependencies**: See research.md; backend: Flask or FastAPI for API and static/template serving; frontend: HTML/CSS/JS (or light framework per research); libraries for path handling, config (e.g. TOML/JSON), logging  
-**Storage**: Config file (paths, tab names, one or two paths per tab); no database; filesystem only for channel folders and file moves  
+**Storage**: Master config file at repo base (bootstrap: server port, optional inbox config path); inbox config file (paths, tab names, one or two paths per tab); no database; filesystem only for channel folders and file moves  
 **Testing**: pytest for backend (config load, scan, move logic); optional frontend/contract tests for API  
 **Target Platform**: macOS (M2); localhost; single operator; no authentication  
 **Project Type**: Web application (backend API + frontend UI)  
@@ -45,6 +45,7 @@ specs/001-inbox-queue-web-ui/
 ### Source Code (repository root)
 
 ```text
+voicinator.toml          # Master config at repo base: [server] port, optional [inbox] configPath
 run.sh                   # Entry point: venv, install from requirements.txt, run web app; Control-C stops
 requirements.txt         # Python dependencies
 

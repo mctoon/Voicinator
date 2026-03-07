@@ -1,0 +1,7 @@
+# Voicinator master config (bootstrap). See voicinator.toml.example.
+
+[server]
+port = 8042
+
+# [inbox]
+# configPath = "inbox_queue_config.toml"

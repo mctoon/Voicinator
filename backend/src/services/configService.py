@@ -1,6 +1,7 @@
 # Python 3.x
 """
 Config service: loads and exposes tabs (and optional reload).
+Inbox config path: master config [inbox].configPath override, then INBOX_CONFIG env, then default.
 """
 from __future__ import annotations
 
@@ -8,6 +9,7 @@ import os
 from pathlib import Path
 
 from backend.src.models.configModel import loadConfigFromPath
+from backend.src.models.masterConfigModel import getInboxConfigPathOverride
 
 
 def getTabs(sConfigPath: str) -> list[dict]:
@@ -16,7 +18,20 @@ def getTabs(sConfigPath: str) -> list[dict]:
 
 
 def getConfigPath() -> str:
-    """Resolve config file path from INBOX_CONFIG env or default under repo/settings."""
+    """Resolve config file path: master config override, then INBOX_CONFIG env, then default."""
+    sOverride = getInboxConfigPathOverride()
+    if sOverride:
+        path = Path(sOverride)
+        if path.is_absolute() and path.exists():
+            return sOverride
+        try:
+            root = Path(__file__).resolve().parents[4]
+            candidate = root / sOverride
+            if candidate.exists():
+                return str(candidate)
+        except Exception:
+            pass
+        return str(Path.cwd() / sOverride)
     sPath = os.environ.get("INBOX_CONFIG", "").strip()
     if sPath:
         return sPath

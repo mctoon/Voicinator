@@ -29,7 +29,7 @@ From the repository root:
 3. **App**: Start the web application (Flask per research.md) serving the inbox-queue UI and API.
 4. **Shutdown**: On Control-C (SIGINT), the script stops the application.
 
-**Result**: Web UI is available at the documented base URL (e.g. `http://localhost:8027/inbox` or as configured). Open in browser; no authentication. Stopping with Control-C leaves no lingering processes.
+**Result**: Web UI is available at the documented base URL (e.g. `http://localhost:8027/` or the port in `voicinator.toml`). Open in browser; no authentication. Stopping with Control-C leaves no lingering processes.
 
 ---
 
@@ -55,7 +55,8 @@ From the repository root:
 
 ## Configuration
 
-- **Config file**: TOML or JSON (see research.md and data-model.md). Define tabs; each tab has optional display name and one or two paths (source, optional destination). Location: app-level settings dir or repo root (e.g. `inbox_queue_config.toml`).
+- **Master config**: `voicinator.toml` at repo root (see `voicinator.toml.example`). Sets `[server] port` (default 8027) and optional `[inbox] configPath` for the inbox tabs config file.
+- **Inbox config file**: TOML or JSON (see research.md and data-model.md). Define tabs; each tab has optional display name and one or two paths (source, optional destination). Path from master config, `INBOX_CONFIG` env, or default `inbox_queue_config.toml` at repo root.
 - **Paths**: Base paths under which channel folders are discovered. Each channel folder must contain "Videos not transcribed" and "Videos 1 to be transcribed"; channels missing either are hidden.
 
 ---

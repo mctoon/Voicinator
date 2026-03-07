@@ -8,10 +8,11 @@ Voicinator is a local, quality-first voice fingerprinting and transcription stac
 
 ## 001 Inbox-to-Queue Web UI
 
-**Status**: Implemented (all 39 tasks from `specs/001-inbox-queue-web-ui/tasks.md` completed).
+**Status**: Implemented (all 41 tasks from `specs/001-inbox-queue-web-ui/tasks.md` completed).
 
-- **Run**: From repo root, `./run.sh` (creates/activates `.venv`, installs deps, starts Flask on port 8027). Open http://localhost:8027/
-- **Config**: TOML or JSON; path via `INBOX_CONFIG` or default `inbox_queue_config.toml` at repo root. See `inbox_queue_config.toml.example`.
+- **Run**: From repo root, `./run.sh` (creates/activates `.venv`, installs deps, starts Flask). Port and bootstrap options from **master config** `voicinator.toml` at repo base (default port 8027). Open http://localhost:8027/ (or the port in `voicinator.toml`).
+- **Master config**: `voicinator.toml` at repo root: `[server] port`, optional `[inbox] configPath`. See `voicinator.toml.example`.
+- **Inbox config**: TOML or JSON; path from master config `[inbox].configPath`, or `INBOX_CONFIG` env, or default `inbox_queue_config.toml`. See `inbox_queue_config.toml.example`.
 - **Stack**: Python 3.11+, Flask, vanilla JS frontend; no database; filesystem-only.
 - **Features**: Tabs per path, channel list (with “Move 3”, “Move all”, Explore), explore view with file list and “Queue selected”, media preview subpanel (play/pause, volume, scrubber, jump), two-path tabs (source → destination queue).
 

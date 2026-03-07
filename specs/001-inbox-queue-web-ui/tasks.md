@@ -143,6 +143,8 @@
 - [x] T037 [P] Add explicit empty state when no tabs or config missing (e.g. message to configure paths) in frontend.
 - [x] T038 Validate edge cases: move 3 with fewer than 3 files moves only existing; channel with missing inbox or queue hidden; idempotent move (already moved counts as success); paired folder moves with media in move service and API.
 - [x] T039 Run quickstart.md: run.sh, open UI, verify tabs, channels, move 3, explore, media subpanel, and two-path behavior if configured.
+- [x] T040 [P] Create master config file at repo base (voicinator.toml) with [server] port and optional [inbox] configPath; add voicinator.toml.example at repo root.
+- [x] T041 Load master config in backend (backend/src/models/masterConfigModel.py or configModel), use server.port in backend/__main__.py and optional inbox.configPath in backend/src/services/configService.py for bootstrap.
 
 ---
 
@@ -214,8 +216,8 @@
 | US3 (P2)    | T025–T028  | 4     |
 | US4 (P2)    | T029–T031  | 3     |
 | US5 (P2)    | T032–T035  | 4     |
-| Polish      | T036–T039  | 4     |
-| **Total**   |            | **39**|
+| Polish      | T036–T041  | 6     |
+| **Total**   |            | **41**|
 
 **Format validation**: All tasks use checklist format `- [ ] [TaskID] [P?] [Story?] Description with file path`.  
 **Independent test criteria**: Each user story phase includes an Independent Test from spec.md.

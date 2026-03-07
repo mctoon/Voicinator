@@ -1,0 +1,9 @@
+# Voicinator master config. Copy to voicinator.toml and adjust.
+# Bootstrap options for the app (e.g. inbox-queue web UI).
+
+[server]
+port = 8027
+
+# Optional: path to inbox-queue tabs config. If unset, uses INBOX_CONFIG env or default path.
+# [inbox]
+# configPath = "inbox_queue_config.toml"
