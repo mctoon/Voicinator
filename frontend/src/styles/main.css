@@ -16,3 +16,19 @@
 .media-subpanel video { max-width: 100%; }
 .media-controls { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.5rem; }
 .media-unsupported { color: #c00; }
+
+/* Unknown speakers page */
+.page-header nav { margin-top: 0.5rem; }
+.page-header nav a { margin-right: 1rem; }
+.file-list { display: flex; flex-direction: column; gap: 0.25rem; margin-bottom: 1rem; }
+.file-item { text-align: left; padding: 0.5rem; cursor: pointer; }
+.segment-section { margin-top: 1.5rem; }
+.segment-list { display: flex; flex-wrap: wrap; gap: 0.25rem; margin-bottom: 1rem; }
+.segment-item { padding: 0.35rem 0.5rem; cursor: pointer; }
+.segment-item.resolved { background: #e8f5e9; }
+.segment-item.selected { outline: 2px solid #1976d2; }
+.segment-player { margin-bottom: 1rem; }
+.resolve-panel { border: 1px solid #ddd; padding: 1rem; background: #fafafa; }
+.resolve-panel label { margin-right: 0.5rem; }
+.resolve-panel input[type="text"], .resolve-panel select { margin: 0 0.5rem 0.5rem 0; }
+#resolveBtn { margin-top: 0.5rem; cursor: pointer; }

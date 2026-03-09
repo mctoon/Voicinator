@@ -9,3 +9,10 @@ port = 8027
 # Optional: path to inbox-queue tabs config. If unset, uses INBOX_CONFIG env or default path.
 # [inbox]
 # configPath = "inbox_queue_config.toml"
+
+# Optional: pipeline base paths. If empty or missing, pipeline uses inbox tab paths.
+# [pipeline]
+# basePaths = ["/path/to/channel/base"]
+# unknownSpeakersStepName = "Videos 5 needs speaker identification"
+# scanIntervalSeconds = 60   # Seconds between discovery scans (default 60; discovery within 1 minute).
+# autoProcessingEnabled = true   # When true (default for 013), processing is automatic; no POST run API.

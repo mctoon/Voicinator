@@ -49,6 +49,25 @@ def loadMasterConfig() -> dict:
     inbox = data.get("inbox")
     if isinstance(inbox, dict) and inbox.get("configPath"):
         result["inbox"]["configPath"] = str(inbox["configPath"]).strip()
+    pipeline = data.get("pipeline")
+    result["pipeline"] = {
+        "basePaths": [],
+        "unknownSpeakersStepName": None,
+        "scanIntervalSeconds": 60,
+        "autoProcessingEnabled": True,
+    }
+    if isinstance(pipeline, dict):
+        if "basePaths" in pipeline and isinstance(pipeline["basePaths"], list):
+            result["pipeline"]["basePaths"] = [str(p).strip() for p in pipeline["basePaths"] if str(p).strip()]
+        if pipeline.get("unknownSpeakersStepName"):
+            result["pipeline"]["unknownSpeakersStepName"] = str(pipeline["unknownSpeakersStepName"]).strip()
+        if "scanIntervalSeconds" in pipeline:
+            try:
+                result["pipeline"]["scanIntervalSeconds"] = int(pipeline["scanIntervalSeconds"])
+            except (TypeError, ValueError):
+                pass
+        if "autoProcessingEnabled" in pipeline:
+            result["pipeline"]["autoProcessingEnabled"] = bool(pipeline["autoProcessingEnabled"])
     return result
 
 
@@ -62,6 +81,30 @@ def getInboxConfigPathOverride() -> str | None:
     """Inbox config path from master config if set; otherwise None."""
     cfg = loadMasterConfig()
     return cfg.get("inbox", {}).get("configPath")
+
+
+def getPipelineBasePaths() -> list[str]:
+    """Pipeline base paths from master config [pipeline] basePaths. May be empty (then use inbox tab paths)."""
+    cfg = loadMasterConfig()
+    return list(cfg.get("pipeline", {}).get("basePaths", []))
+
+
+def getPipelineUnknownSpeakersStepOverride() -> str | None:
+    """Override for unknown-speakers step folder name from master config, or None."""
+    cfg = loadMasterConfig()
+    return cfg.get("pipeline", {}).get("unknownSpeakersStepName")
+
+
+def getPipelineScanIntervalSeconds() -> int:
+    """Seconds between discovery scans (default 60)."""
+    cfg = loadMasterConfig()
+    return cfg.get("pipeline", {}).get("scanIntervalSeconds", 60)
+
+
+def getPipelineAutoProcessingEnabled() -> bool:
+    """Whether automatic pipeline processing is enabled (default True for 013)."""
+    cfg = loadMasterConfig()
+    return cfg.get("pipeline", {}).get("autoProcessingEnabled", True)
 
 
 def getLogPath() -> Path:

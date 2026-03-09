@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Unknown Speakers</title>
+  <link rel="stylesheet" href="/styles/main.css">
+</head>
+<body>
+  <header class="page-header">
+    <h1>Unknown Speakers</h1>
+    <nav><a href="/">Inbox</a> | <a href="/unknownSpeakersPage.html">Unknown speakers</a></nav>
+  </header>
+  <main class="page-main">
+    <section class="speakers-section">
+      <h2>Files needing speaker identification</h2>
+      <div id="fileList" class="file-list"></div>
+      <div id="message" class="message" aria-live="polite"></div>
+    </section>
+    <section id="segmentSection" class="segment-section" style="display: none;">
+      <h2>Segments</h2>
+      <div id="segmentList" class="segment-list"></div>
+      <div id="segmentPlayer" class="segment-player">
+        <audio id="segmentAudio" controls></audio>
+      </div>
+      <div id="resolvePanel" class="resolve-panel">
+        <h3>Resolve speaker</h3>
+        <label><input type="radio" name="resolution" value="existing"> Existing speaker</label>
+        <select id="existingSpeakerSelect"></select>
+        <br>
+        <label><input type="radio" name="resolution" value="new"> New speaker</label>
+        <input type="text" id="newSpeakerName" placeholder="Name">
+        <br>
+        <label><input type="radio" name="resolution" value="placeholder"> Placeholder</label>
+        <input type="text" id="placeholderName" placeholder="Placeholder name">
+        <br>
+        <button id="resolveBtn" type="button">Resolve</button>
+      </div>
+    </section>
+  </main>
+  <script src="/services/apiClient.js"></script>
+  <script src="/services/pipelineSpeakersApi.js"></script>
+  <script src="/pages/unknownSpeakersPage.js"></script>
+</body>
+</html>

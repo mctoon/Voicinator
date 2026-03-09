@@ -14,6 +14,9 @@ build/
 # Logs (also *.log below)
 logs/
 
+# Pipeline 002: speaker resolutions (local stub storage)
+data/
+
 # Universal
 .DS_Store
 Thumbs.db

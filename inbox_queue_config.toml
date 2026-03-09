@@ -3,7 +3,7 @@
 # Channel folders under each path must contain "Videos not transcribed" and "Videos 1 to be transcribed".
 
 tabs = [
-  { tabName = "PrimaryTest", path = "/Volumes/2TB/Voicetest/Channels1" },
+  # { tabName = "PrimaryTest", path = "/Volumes/2TB/Voicetest/Channels1" },
   # Two-path tab: source and destination; queue from source moves to destination.
-  # { tabName = "Import", paths = [ "/source/base", "/destination/base" ] },
+  { tabName = "DualTest", paths = [ "/Volumes/2TB/Voicetest/Channels1", "/Volumes/2TB/Voicetest/Channels2" ] },
 ]
