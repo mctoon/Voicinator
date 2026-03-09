@@ -44,7 +44,7 @@ def _runOneCycle() -> None:
             return
         _inProgress = True
     try:
-        items = discoverMediaInAllSteps()
+        items = discoverMediaInAllSteps(exclude_unknown_speakers_step=True)
         chosen = selectOneFileByPriority(items)
         if not chosen:
             return

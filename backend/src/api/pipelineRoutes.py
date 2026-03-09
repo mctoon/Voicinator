@@ -10,6 +10,8 @@ from flask import Blueprint, jsonify, request
 
 from backend.src.models.masterConfigModel import (
     getPipelineAutoProcessingEnabled,
+    getPipelineChunkDurationDefaulted,
+    getPipelineChunkDurationSeconds,
     getPipelineUnknownSpeakersStepOverride,
 )
 from backend.src.models.pipelineStepPlan import (
@@ -38,6 +40,8 @@ def register(bp: Blueprint) -> None:
             "stepFolders": stepFolders,
             "unknownSpeakersStepName": unknownStep,
             "finalFolderName": getFinalFolderName(),
+            "chunkDurationSeconds": getPipelineChunkDurationSeconds(),
+            "chunkDurationDefaulted": getPipelineChunkDurationDefaulted(),
         })
 
     @bp.route("/discover", methods=["GET"])

@@ -1,13 +1,22 @@
 # Python 3.x
 """
 Load master config (voicinator.toml) at repo base: server.port, optional inbox.configPath.
+Pipeline chunk duration (chunkDurationSeconds): 10–120 s, default 30.
 """
 from __future__ import annotations
 
+import logging
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 
 DEFAULT_PORT = 8027
+
+# Chunk duration for splitting long audio (seconds). Range 10–120; default 30. See data-model.md.
+CHUNK_DURATION_MIN = 10
+CHUNK_DURATION_MAX = 120
+CHUNK_DURATION_DEFAULT = 30
 
 
 def getMasterConfigPath() -> Path:
@@ -55,6 +64,8 @@ def loadMasterConfig() -> dict:
         "unknownSpeakersStepName": None,
         "scanIntervalSeconds": 60,
         "autoProcessingEnabled": True,
+        "chunkDurationSeconds": CHUNK_DURATION_DEFAULT,
+        "chunkDurationDefaulted": True,
     }
     if isinstance(pipeline, dict):
         if "basePaths" in pipeline and isinstance(pipeline["basePaths"], list):
@@ -68,6 +79,26 @@ def loadMasterConfig() -> dict:
                 pass
         if "autoProcessingEnabled" in pipeline:
             result["pipeline"]["autoProcessingEnabled"] = bool(pipeline["autoProcessingEnabled"])
+        # Chunk duration: 10–120 s, default 30. Invalid/missing → default + defaulted=True + log warning.
+        raw_chunk = pipeline.get("chunkDurationSeconds")
+        try:
+            iVal = int(raw_chunk) if raw_chunk is not None else None
+        except (TypeError, ValueError):
+            iVal = None
+        if iVal is not None and CHUNK_DURATION_MIN <= iVal <= CHUNK_DURATION_MAX:
+            result["pipeline"]["chunkDurationSeconds"] = iVal
+            result["pipeline"]["chunkDurationDefaulted"] = False
+        else:
+            if raw_chunk is not None:
+                logger.warning(
+                    "pipeline.chunkDurationSeconds invalid or out of range (min=%s, max=%s): %s; using default %s",
+                    CHUNK_DURATION_MIN,
+                    CHUNK_DURATION_MAX,
+                    raw_chunk,
+                    CHUNK_DURATION_DEFAULT,
+                )
+            result["pipeline"]["chunkDurationSeconds"] = CHUNK_DURATION_DEFAULT
+            result["pipeline"]["chunkDurationDefaulted"] = True
     return result
 
 
@@ -105,6 +136,18 @@ def getPipelineAutoProcessingEnabled() -> bool:
     """Whether automatic pipeline processing is enabled (default True for 013)."""
     cfg = loadMasterConfig()
     return cfg.get("pipeline", {}).get("autoProcessingEnabled", True)
+
+
+def getPipelineChunkDurationSeconds() -> int:
+    """Effective chunk duration in seconds (10–120). Default 30 when missing or invalid."""
+    cfg = loadMasterConfig()
+    return cfg.get("pipeline", {}).get("chunkDurationSeconds", CHUNK_DURATION_DEFAULT)
+
+
+def getPipelineChunkDurationDefaulted() -> bool:
+    """True if config was missing or invalid and default 30 was used."""
+    cfg = loadMasterConfig()
+    return cfg.get("pipeline", {}).get("chunkDurationDefaulted", True)
 
 
 def getLogPath() -> Path:

@@ -80,16 +80,26 @@ def discoverMediaInStep1(sBasePathFilter: str | None = None) -> list[dict]:
     return resultList
 
 
-def discoverMediaInAllSteps(sBasePathFilter: str | None = None) -> list[dict]:
+def discoverMediaInAllSteps(
+    sBasePathFilter: str | None = None,
+    exclude_unknown_speakers_step: bool = False,
+) -> list[dict]:
     """
     Discover media in all pipeline step folders (1–8) under configured bases/channels.
     Returns list of dicts: mediaPath, pairedFolderPath, channelName, basePath,
     stepFolderName, stepIndex (0–7). If sBasePathFilter is set, only that base is scanned.
+    If exclude_unknown_speakers_step is True, the "Videos 5 needs speaker identification"
+    folder (or config override) is skipped—for auto-pipeline, which does not process step 5
+    (user handles it via UI).
     """
     bases = getPipelineBasePathsResolved()
     if sBasePathFilter:
         bases = [b for b in bases if b == sBasePathFilter or b == str(Path(sBasePathFilter).resolve())]
     stepOrder = getStepFolderOrder()
+    unknownStepName: str | None = None
+    if exclude_unknown_speakers_step:
+        override = getPipelineUnknownSpeakersStepOverride()
+        unknownStepName = getUnknownSpeakersStepName(override)
     resultList: list[dict] = []
     for sBase in bases:
         basePath = Path(sBase)
@@ -100,6 +110,8 @@ def discoverMediaInAllSteps(sBasePathFilter: str | None = None) -> list[dict]:
                 continue
             sChannelName = channelDir.name
             for stepIndex, stepName in enumerate(stepOrder):
+                if unknownStepName and stepName == unknownStepName:
+                    continue
                 stepDir = channelDir / stepName
                 if not stepDir.is_dir():
                     continue
