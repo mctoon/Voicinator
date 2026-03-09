@@ -5,3 +5,6 @@ port = 8042
 
 # [inbox]
 # configPath = "inbox_queue_config.toml"
+
+[pipeline]
+chunkDurationSeconds = 20

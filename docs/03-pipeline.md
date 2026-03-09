@@ -31,7 +31,7 @@ End-to-end voice-to-text with speaker diarization, local on Mac M2.
 
 - **English-only** – Enforce in Whisper.
 - **--no-fingerprint** – No sample extraction; keep placeholders only.
-- **Tunables** – Chunk size, overlap, max speakers (MSDD can stay dynamic).
+- **Tunables** – Chunk size, overlap, max speakers (MSDD can stay dynamic). Chunk duration is configurable via `voicinator.toml` under `[pipeline].chunkDurationSeconds` (10–120 s, default 30).
 
 ## Performance (M2)
 
