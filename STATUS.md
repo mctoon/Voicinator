@@ -1,14 +1,14 @@
 # Voicinator – Project status
 
-**Last updated**: 2026-03-08
+**Last updated**: 2026-03-09
 
-## Current focus: 002 Media Folder Pipeline
+## Current focus: 003 Sister files into folder
 
-Active development is on **002 Media Folder Pipeline** (transcript outputs, step 2/3 processors, diarization, unknown-speakers UI). For speckit/implement and check-prerequisites, use branch `002-media-folder-pipeline` or set `SPECIFY_FEATURE=002-media-folder-pipeline`.
+Active development is on **003 Sister files into folder** (collect sister files into paired folder when media and sisters sit as siblings in "Videos 1 to be transcribed"). For speckit/implement, use branch `003-sister-files-into-folder` or set `SPECIFY_FEATURE=003-sister-files-into-folder`.
 
 ## Overview
 
-Voicinator is a local, quality-first voice fingerprinting and transcription stack for Mac M2. This repo holds docs, specs, and feature implementations: **001-inbox-queue-web-ui**, **002-media-folder-pipeline**, **013-auto-pipeline-processing**.
+Voicinator is a local, quality-first voice fingerprinting and transcription stack for Mac M2. This repo holds docs, specs, and feature implementations: **001-inbox-queue-web-ui**, **002-media-folder-pipeline**, **003-sister-files-into-folder**, **013-auto-pipeline-processing**.
 
 ## 001 Inbox-to-Queue Web UI
 
@@ -29,6 +29,13 @@ Voicinator is a local, quality-first voice fingerprinting and transcription stac
 - **Config**: Optional `[pipeline] basePaths` and `unknownSpeakersStepName` in `voicinator.toml`; if basePaths empty, pipeline uses inbox tab paths. Speaker resolutions stored in `data/speaker_resolutions.json` (stub until real DB).
 - **Deps**: `faster-whisper` (step 3); optional `nemo_toolkit[asr]` for step 4 (NeMo MSDD).
 
+## 003 Sister files into folder
+
+**Status**: Implemented (all tasks in `specs/003-sister-files-into-folder/tasks.md` completed). When media and sister files (same base name, different extensions) sit in "Videos 1 to be transcribed" as siblings, the system creates a paired folder (same base name as the media file) and moves all sister files into it; the primary media file stays in the queue folder. No empty paired folder is created. Runs automatically during pipeline discovery (step 1): both `GET /api/pipeline/discover` and pipeline run normalize layout before processing.
+
+- **Config**: None (uses pipeline step 1 folder per 002).
+- **Run**: Same as 002/013; no extra steps. Place media + sister files in "Videos 1 to be transcribed"; on next discover or pipeline run, sisters are collected into the paired folder.
+
 ## 013 Automatic Pipeline Processing
 
 **Status**: Implemented. Pipeline processing is automatic: no API call or run button. A background thread scans all step folders (1–8) at a configurable interval (default 60 s); selects one file (highest step number first); runs one step for that file; sleeps when no work. One file in progress at a time. First discovery runs immediately on startup, then every `scanIntervalSeconds`.
@@ -41,6 +48,7 @@ Voicinator is a local, quality-first voice fingerprinting and transcription stac
 
 - 001-inbox-queue-web-ui: Local web UI to queue media from “Videos not transcribed” to “Videos 1 to be transcribed”; tabbed UI; optional two paths per tab (source/destination); media subpanel; pagination/virtualization; run.sh + requirements.txt; Flask; config file (TOML/JSON).
 - 002-media-folder-pipeline: Process media from "Videos 1 to be transcribed" through step folders; sister files in paired folder; word-level and human-readable transcripts; unknown speakers to step 5; web UI to resolve speakers.
+- 003-sister-files-into-folder: When media and sister files are in the queue folder as siblings, collect sister files into the paired folder (primary stays in queue); no empty paired folder; runs during discovery.
 - 013-auto-pipeline-processing: Automatic pipeline processing: background discovery loop (all steps 1–8), one file at a time, highest step first; configurable scan interval (default 60 s); no POST run API when auto enabled.
 
 ## Issues / notes

@@ -11,6 +11,7 @@ from backend.src.models.configModel import loadConfigFromPath
 from backend.src.models.masterConfigModel import getPipelineBasePaths, getPipelineUnknownSpeakersStepOverride
 from backend.src.models.pipelineStepPlan import getStepFolderOrder, getUnknownSpeakersStepName
 from backend.src.services.configService import getConfigPath
+from backend.src.services.sisterFilesCollectService import collectSisterFilesIntoPairedFolder
 
 # Step 1 folder name (queue input for pipeline)
 STEP1_NAME = "Videos 1 to be transcribed"
@@ -66,6 +67,8 @@ def discoverMediaInStep1(sBasePathFilter: str | None = None) -> list[dict]:
             for entry in step1Dir.iterdir():
                 if entry.is_file() and entry.suffix.lower() in MEDIA_EXTENSIONS:
                     mediaPath = str(entry)
+                    # 003: collect sister files into paired folder before discovery
+                    collectSisterFilesIntoPairedFolder(mediaPath)
                     # Paired folder = same stem in same dir (sidecar)
                     pairedFolder = step1Dir / entry.stem
                     resultList.append({
@@ -103,6 +106,9 @@ def discoverMediaInAllSteps(sBasePathFilter: str | None = None) -> list[dict]:
                 for entry in stepDir.iterdir():
                     if entry.is_file() and entry.suffix.lower() in MEDIA_EXTENSIONS:
                         mediaPath = str(entry)
+                        # 003: collect sister files into paired folder in step 1
+                        if stepIndex == 0:
+                            collectSisterFilesIntoPairedFolder(mediaPath)
                         pairedFolder = stepDir / entry.stem
                         resultList.append({
                             "mediaPath": mediaPath,
