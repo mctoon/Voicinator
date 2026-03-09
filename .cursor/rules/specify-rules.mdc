@@ -11,6 +11,12 @@ Auto-generated from all feature plans. Last updated: 2026-03-07
 ## Active Technologies
 - Python 3.x (e.g. 3.11+); version documented in run.sh and requirements.tx + See research.md; backend: Flask or FastAPI for API and static/template serving; frontend: HTML/CSS/JS (or light framework per research); libraries for path handling, config (e.g. TOML/JSON), logging (001-inbox-queue-web-ui)
 - Config file (paths, tab names, one or two paths per tab); no database; filesystem only for channel folders and file moves (001-inbox-queue-web-ui)
+- Python 3.11+ (per repo run.sh / requirements) + Flask (existing); Whisper or equivalent for transcription; diarization library (e.g. pyannote.audio or lighter); path handling, TOML/JSON config; optional speaker DB client (interface; stub persists to local storage or files when DB absent). (002-media-folder-pipeline)
+- Filesystem for media and paired folders; local storage or files for speaker-resolution stub (new/placeholder) until real DB exists. (002-media-folder-pipeline)
+- Python 3.11+ (per repo run.sh / requirements) + Flask (existing); **Whisper Large-v3** for transcription (openai-whisper or faster-whisper with large-v3 model); **NeMo Multi-Scale Diarization Decoder (MSDD)** for diarization (NVIDIA NeMo toolkit); path handling, TOML/JSON config; optional speaker DB client (interface; stub when absent). **Pyannote is not to be used.** (002-media-folder-pipeline)
+- Filesystem for media and paired folders; local storage or files for speaker-resolution stub until real DB exists. (002-media-folder-pipeline)
+- Python 3.11+ (same as repo and 002) + Flask (existing); same as 002 (faster-whisper, pipeline services). New: background loop (thread or scheduler) with configurable scan interval (e.g. 30–60 s to satisfy “within 1 minute” discovery). (013-auto-pipeline-processing)
+- Filesystem only (no new storage); pipeline state is “which file is in which folder.” (013-auto-pipeline-processing)
 
 - Python 3.x (e.g. 3.11+); version documented in run.sh and requirements.tx + See research.md; likely FastAPI or Flask for search API, SQLAlchemy or async equivalent for DB, PostgreSQL client; embedding/vector lib for meaning-based tier (012-phrase-search-tiers)
 
@@ -30,9 +36,10 @@ cd src [ONLY COMMANDS FOR ACTIVE TECHNOLOGIES][ONLY COMMANDS FOR ACTIVE TECHNOLO
 Python 3.x (e.g. 3.11+); version documented in run.sh and requirements.tx: Follow standard conventions
 
 ## Recent Changes
-- 001-inbox-queue-web-ui: Added Python 3.x (e.g. 3.11+); version documented in run.sh and requirements.tx + See research.md; backend: Flask or FastAPI for API and static/template serving; frontend: HTML/CSS/JS (or light framework per research); libraries for path handling, config (e.g. TOML/JSON), logging
+- 013-auto-pipeline-processing: Added Python 3.11+ (same as repo and 002) + Flask (existing); same as 002 (faster-whisper, pipeline services). New: background loop (thread or scheduler) with configurable scan interval (e.g. 30–60 s to satisfy “within 1 minute” discovery).
+- 002-media-folder-pipeline: Added Python 3.11+ (per repo run.sh / requirements) + Flask (existing); **Whisper Large-v3** for transcription (openai-whisper or faster-whisper with large-v3 model); **NeMo Multi-Scale Diarization Decoder (MSDD)** for diarization (NVIDIA NeMo toolkit); path handling, TOML/JSON config; optional speaker DB client (interface; stub when absent). **Pyannote is not to be used.**
+- 002-media-folder-pipeline: Added Python 3.11+ (per repo run.sh / requirements) + Flask (existing); Whisper or equivalent for transcription; diarization library (e.g. pyannote.audio or lighter); path handling, TOML/JSON config; optional speaker DB client (interface; stub persists to local storage or files when DB absent).
 
-- 012-phrase-search-tiers: Added Python 3.x (e.g. 3.11+); version documented in run.sh and requirements.tx + See research.md; likely FastAPI or Flask for search API, SQLAlchemy or async equivalent for DB, PostgreSQL client; embedding/vector lib for meaning-based tier
 
 <!-- MANUAL ADDITIONS START -->
 <!-- MANUAL ADDITIONS END -->

@@ -8,7 +8,15 @@ from pathlib import Path
 
 from flask import Flask, jsonify
 
-from backend.src.api import tabsRoutes, channelsRoutes, moveRoutes, filesRoutes, mediaRoutes
+from backend.src.api import (
+    tabsRoutes,
+    channelsRoutes,
+    moveRoutes,
+    filesRoutes,
+    mediaRoutes,
+    pipelineRoutes,
+    pipelineSpeakersRoutes,
+)
 
 # Static files: repo root frontend/src (parent of backend/src/api -> 3 levels up from api/)
 _STATIC_ROOT = Path(__file__).resolve().parents[3] / "frontend" / "src"
@@ -21,6 +29,8 @@ def createApp() -> Flask:
 
     inboxBp = __createInboxBlueprint()
     app.register_blueprint(inboxBp, url_prefix="/api/inbox")
+    pipelineBp = __createPipelineBlueprint()
+    app.register_blueprint(pipelineBp, url_prefix="/api/pipeline")
 
     @app.errorhandler(400)
     def badRequest(err):
@@ -46,6 +56,10 @@ def createApp() -> Flask:
     def explorePage():
         return app.send_static_file("pages/explorePage.html")
 
+    @app.route("/unknownSpeakersPage.html")
+    def unknownSpeakersPage():
+        return app.send_static_file("pages/unknownSpeakersPage.html")
+
     return app
 
 
@@ -57,4 +71,12 @@ def __createInboxBlueprint():
     moveRoutes.register(bp)
     filesRoutes.register(bp)
     mediaRoutes.register(bp)
+    return bp
+
+
+def __createPipelineBlueprint():
+    from flask import Blueprint
+    bp = Blueprint("pipeline", __name__)
+    pipelineRoutes.register(bp)
+    pipelineSpeakersRoutes.register(bp)
     return bp

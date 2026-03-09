@@ -1,0 +1,9 @@
+# NeMo MSDD for pipeline step 4 (diarization). Only supported on Python 3.10–3.13.
+# Install from run.sh when Python version is supported; see original-research/NeMo MSDD implementation guide.md
+# On Python 3.13, NumPy <2 often falls back to source builds; prefer binary wheels.
+# Step 4 patches missing np.sctypes at runtime for NeMo compatibility.
+numpy>=2
+# onnx 1.19.x expects ml_dtypes to expose float4_e2m1fn.
+ml_dtypes>=0.5.0
+nemo_toolkit[asr]==2.1.0
+protobuf>=6.33.4

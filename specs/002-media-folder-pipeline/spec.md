@@ -7,6 +7,18 @@
 
 ---
 
+## Clarifications
+
+### Session 2026-03-07
+
+- Q: If a second pipeline run is started before the first finishes, what should the system do? → A: Only one pipeline run at a time; reject or queue new runs until the current run finishes.
+- Q: If the speaker database is not yet available at first release, how should "identify as existing" and "add sample" behave? → A: Full UI/API; stub implementation (all segments unknown; persist new/placeholder locally or in files until real DB exists).
+- Q: Should the system log each pipeline run and each step outcome for operator debugging? → A: Yes; log each run start/end and each step outcome (success or failure) per file to a configurable log sink (e.g. file or stdout).
+- Q: When the pipeline runs, process a bounded number of files per run or all files in step 1? → A: Always process all discovered files in step 1; no limit.
+- Q: Must the unknown-speakers web UI include an explicit action to move a file to "Videos" after resolution? → A: Automatically move to the next step in the pipeline once all speakers have been identified (no explicit button required).
+
+---
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Process media from configured folders (Priority: P1)
@@ -90,7 +102,7 @@ When media files are in the designated unknown-speakers step folder (Videos 5 ne
 3. **Given** the user is listening to a speaker segment, **When** the user identifies that speaker as an existing speaker in the speaker database, **Then** the system adds the current audio sample to that speaker's fingerprint and associates the segment with that speaker.
 4. **Given** the user is listening to a speaker segment, **When** the user creates a new speaker and provides a name, **Then** the system creates the new speaker and associates the segment with that speaker.
 5. **Given** the user is listening to a speaker segment, **When** the user indicates the speaker is unknown, **Then** the system creates a placeholder speaker name for that speaker and associates the segment with it.
-6. **Given** all unknown speakers for a media file have been resolved (existing, new, or placeholder), **When** the user completes resolution, **Then** the media file is eligible to be moved to the channel's "Videos" folder (by this feature or a separate process).
+6. **Given** all unknown speakers for a media file have been resolved (existing, new, or placeholder), **When** the user completes resolution, **Then** the system automatically moves the media file and its paired folder to the next step in the pipeline (step 6 → 7 → 8 → Videos).
 
 ---
 
@@ -103,14 +115,17 @@ When media files are in the designated unknown-speakers step folder (Videos 5 ne
 - What happens when there are no sister files? The paired folder still exists (named after the media base name) and contains only the media file until processing adds outputs.
 - What happens when the user closes the web UI without resolving all unknown speakers? The media file remains in the unknown-speakers folder until the user returns and completes resolution; no data is lost.
 - What happens when the same speaker appears in multiple segments of one file? The user may resolve each segment; the system may offer to apply one resolution to all segments for the same diarization cluster.
+- What happens when a pipeline run is requested while another run is in progress? The system MUST allow only one run at a time; MUST reject or queue the new request until the current run completes (see FR-016).
 
 ---
 
 ## Assumptions
 
+- Transcription MUST use Whisper Large-v3. Diarization MUST use NeMo's Multi-Scale Diarization Decoder (MSDD). Pyannote is not to be used.
 - A speaker database and voice fingerprinting capability exist (or will exist) in the system; this feature consumes them for "existing speaker" and "add sample to fingerprint."
+- If the speaker database is not available at first release, the system MUST still offer the full web UI and API: a stub implementation MUST treat all segments as unknown and MUST persist resolutions (new speaker, placeholder) in local storage or files so that the flow works and can be wired to a real database later.
 - The web UI is in scope for this feature; it is the primary way operators resolve unknown speakers.
-- Moving a file from the unknown-speakers folder to "Videos" after resolution may be done by the same web UI or by a separate batch process; the spec requires that resolved files are eligible to be moved.
+- Moving a file from the unknown-speakers folder to "Videos" after resolution is automatic: once all speakers are resolved, the system moves the file through step 6 → 7 → 8 → Videos without requiring an explicit user action.
 
 ---
 
@@ -133,7 +148,7 @@ All paths are relative to a channel folder (e.g. `[Base Path]/[YouTube Channel]/
 | 8 | `Videos 8 export ready` | Words aligned to speakers; transcript and exports written to paired folder. |
 | Final | `Videos` | Complete: all processing done; media and paired folder stored here. |
 
-**Processing flow:** Media moves 0 → 1 (user queues via web UI) → 2 → 3 → 4 → 5. At step 5: if all speakers are identified, move to 6 → 7 (summarization done) → 8 → Videos; if one or more speakers are unknown, the file remains in step 5 until the user resolves them in the web UI, then moves to 6 → 7 → 8 → Videos. The system MUST move media and its paired folder only between these folders and MUST NOT invent folder names outside this set. Step 5 is the designated unknown-speakers folder; configuration MAY allow a different step number or name to be used instead. 
+**Processing flow:** Media moves 0 → 1 (user queues via web UI) → 2 → 3 → 4 → 5. At step 5: if all speakers are identified, move to 6 → 7 (summarization done) → 8 → Videos; if one or more speakers are unknown, the file remains in step 5 until the user resolves them in the web UI, then moves to 6 → 7 → 8 → Videos. The system MUST move media and its paired folder only between these folders and MUST NOT invent folder names outside this set. Step 5 is the designated unknown-speakers folder; configuration MAY allow a different step number or name to be used instead. Each pipeline run MUST process all media files currently discovered in "Videos 1 to be transcribed" (no per-run limit). 
 
 ### Functional Requirements
 
@@ -151,7 +166,9 @@ All paths are relative to a channel folder (e.g. `[Base Path]/[YouTube Channel]/
 - **FR-012**: Web UI MUST allow the user to identify a segment's speaker as an existing speaker in the speaker database and to add the current audio sample to that speaker's fingerprint.
 - **FR-013**: Web UI MUST allow the user to create a new speaker by providing a name and to associate the current segment (or cluster) with that new speaker.
 - **FR-014**: Web UI MUST allow the user to mark a speaker as unknown and to create a placeholder speaker name for that speaker.
-- **FR-015**: After all unknown speakers for a media file have been resolved (existing, new, or placeholder), the system MUST make the file eligible to be moved to the channel's "Videos" folder; the actual move MAY be performed by the web UI or by a separate process.
+- **FR-015**: After all unknown speakers for a media file have been resolved (existing, new, or placeholder), the system MUST automatically move the media file and its paired folder to the next step in the pipeline (step 6 → 7 → 8 → Videos); no explicit "Move to Videos" action is required from the user.
+- **FR-016**: Only one pipeline run may execute at a time; the system MUST reject or queue any new run request until the current run completes.
+- **FR-017**: The system MUST log each pipeline run start and end, and each step outcome (success or failure) per file, to a configurable log sink (e.g. file or stdout) so operators can debug without inspecting the filesystem alone.
 
 ### Key Entities
 
