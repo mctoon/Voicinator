@@ -2,3 +2,4 @@ have a window in the UI that states what is currently hapenning
 add a percent complete log if possible, or a UI element
 have the UI give a log of the things that have been done
 the names of the associated generated files should have the same base filename as the media filen
+Ui shows the number of files in each step, and allows exploring each step

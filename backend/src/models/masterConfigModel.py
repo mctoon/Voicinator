@@ -58,6 +58,7 @@ def loadMasterConfig() -> dict:
     inbox = data.get("inbox")
     if isinstance(inbox, dict) and inbox.get("configPath"):
         result["inbox"]["configPath"] = str(inbox["configPath"]).strip()
+    result["llms"] = _normalizeLlmsList(data.get("llms"))
     pipeline = data.get("pipeline")
     result["pipeline"] = {
         "basePaths": [],
@@ -66,6 +67,7 @@ def loadMasterConfig() -> dict:
         "autoProcessingEnabled": True,
         "chunkDurationSeconds": CHUNK_DURATION_DEFAULT,
         "chunkDurationDefaulted": True,
+        "summarizations": _normalizeSummarizationsList(pipeline.get("summarizations") if isinstance(pipeline, dict) else None),
     }
     if isinstance(pipeline, dict):
         if "basePaths" in pipeline and isinstance(pipeline["basePaths"], list):
@@ -161,3 +163,82 @@ def getLogPath() -> Path:
         return root / "logs" / "voicinator.log"
     except Exception:
         return Path.cwd() / "logs" / "voicinator.log"
+
+
+def _normalizeLlmsList(raw: list | None) -> list[dict]:
+    """Return list of LLM dicts (name, type, baseUrl or provider, apiKey?, model?) from [[llms]]."""
+    if not isinstance(raw, list):
+        return []
+    out: list[dict] = []
+    for item in raw:
+        if not isinstance(item, dict):
+            continue
+        sName = (item.get("name") or "").strip()
+        sType = (item.get("type") or "").strip().lower()
+        if not sName or sType not in ("ollama", "remote"):
+            continue
+        entry: dict = {"name": sName, "type": sType}
+        if item.get("baseUrl") is not None:
+            entry["baseUrl"] = str(item["baseUrl"]).strip()
+        elif sType == "ollama":
+            entry["baseUrl"] = "http://localhost:11434"
+        if item.get("provider") is not None:
+            entry["provider"] = str(item["provider"]).strip()
+        if item.get("apiKey") is not None:
+            entry["apiKey"] = str(item["apiKey"]).strip()
+        if item.get("model") is not None:
+            entry["model"] = str(item["model"]).strip()
+        out.append(entry)
+    return out
+
+
+def _normalizeSummarizationsList(raw: list | None) -> list[dict]:
+    """Return list of summarization part dicts (name, llm, systemPrompt, userPrompt) from pipeline.summarizations.
+    Legacy: if systemPrompt/userPrompt missing but instructions present, userPrompt = instructions + newline + {{TRANSCRIPT}}.
+    """
+    if not isinstance(raw, list):
+        return []
+    out: list[dict] = []
+    for item in raw:
+        if not isinstance(item, dict):
+            continue
+        sName = (item.get("name") or "").strip()
+        sLlm = (item.get("llm") or "").strip()
+        if not sName or not sLlm:
+            continue
+        sSystem = (item.get("systemPrompt") or "").strip()
+        sUser = (item.get("userPrompt") or "").strip()
+        sInstructions = (item.get("instructions") or "").strip()
+        if not sSystem and not sUser and sInstructions:
+            sUser = sInstructions + "\n\n{{TRANSCRIPT}}"
+        out.append({"name": sName, "llm": sLlm, "systemPrompt": sSystem, "userPrompt": sUser})
+    return out
+
+
+def getLlms() -> list[dict]:
+    """LLM definitions from voicinator.toml [[llms]]. Order = display order. Returns one default (Ollama local) when none configured."""
+    cfg = loadMasterConfig()
+    llms = list(cfg.get("llms", []))
+    if llms:
+        return llms
+    return [{"name": "local", "type": "ollama", "baseUrl": "http://localhost:11434"}]
+
+
+def getSummarizations() -> list[dict]:
+    """Summarization parts from voicinator.toml pipeline.summarizations. Order = output order. Returns five defaults when none configured (per spec FR-008, SC-006)."""
+    cfg = loadMasterConfig()
+    parts = list(cfg.get("pipeline", {}).get("summarizations", []))
+    if parts:
+        return parts
+    return _defaultSummarizationParts()
+
+
+def _defaultSummarizationParts() -> list[dict]:
+    """Five default summarization parts; each has systemPrompt and userPrompt. Use {{TRANSCRIPT}} in prompts for the transcript."""
+    return [
+        {"name": "Clickbait-style title", "llm": "local", "systemPrompt": "You are a concise summarizer. Output only the requested content, no preamble.", "userPrompt": "A single line, highly clickbait-style title with emojis and hashtags; maximum clickbait.\n\n{{TRANSCRIPT}}"},
+        {"name": "One-sentence summary", "llm": "local", "systemPrompt": "You are a concise summarizer. Output only the requested content, no preamble.", "userPrompt": "A single sentence summarizing the entire transcript; not clickbait, as useful as possible in one sentence.\n\n{{TRANSCRIPT}}"},
+        {"name": "Paragraph overview", "llm": "local", "systemPrompt": "You are a concise summarizer. Output only the requested content, no preamble.", "userPrompt": "A single paragraph overview of the transcript.\n\n{{TRANSCRIPT}}"},
+        {"name": "Interesting passages", "llm": "local", "systemPrompt": "You are a concise summarizer. Output only the requested content, no preamble.", "userPrompt": "If there are interesting parts—something novel or disagreement between participants—a short summary of the conflict or highlight with start/stop timestamps. Omitted when there is nothing notable to list.\n\n{{TRANSCRIPT}}"},
+        {"name": "Section summary with timestamps", "llm": "local", "systemPrompt": "You are a concise summarizer. Output only the requested content, no preamble.", "userPrompt": "A meaningful summary with timestamps for sections that stand out.\n\n{{TRANSCRIPT}}"},
+    ]

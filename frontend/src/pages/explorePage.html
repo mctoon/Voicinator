@@ -5,15 +5,23 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta http-equiv="Content-Language" content="en">
   <meta name="google" content="notranslate">
-  <title>Explore – Inbox Queue</title>
+  <title>Explore – Videos</title>
   <link rel="stylesheet" href="/styles/main.css">
 </head>
 <body>
-  <header class="page-header">
-    <h1>Explore channel</h1>
-    <button type="button" id="backBtn">Back to channels</button>
-  </header>
-  <main class="page-main">
+  <div class="app-layout">
+    <nav class="nav-sidebar" aria-label="Main navigation">
+      <ul>
+        <li><a href="/">Videos</a></li>
+        <li><a href="/summarizationConfigPage.html">Config</a></li>
+      </ul>
+    </nav>
+    <div class="page-content">
+      <header class="page-header">
+        <h1>Explore channel</h1>
+        <button type="button" id="backBtn">Back to channels</button>
+      </header>
+      <main class="page-main">
     <section class="media-section">
       <h2>Preview</h2>
       <div id="mediaSubpanel"></div>
@@ -27,7 +35,9 @@
       <div id="filePagination" class="pagination"></div>
       <div id="message" class="message" aria-live="polite"></div>
     </section>
-  </main>
+      </main>
+    </div>
+  </div>
   <script src="/services/apiClient.js"></script>
   <script src="/components/mediaSubpanel.js"></script>
   <script src="/components/fileList.js"></script>

@@ -37,18 +37,39 @@ def _writeWordLevelJson(pairedDir: Path, wordsList: list[dict]) -> None:
         json.dump(wordsList, f, ensure_ascii=False, indent=2)
 
 
+def _formatTimestamp(seconds: float) -> str:
+    """Format seconds as Otter-style time offset: M:SS or H:MM:SS (e.g. 0:00, 1:05, 1:23:45)."""
+    totalSec = int(round(seconds))
+    if totalSec < 3600:
+        minutes = totalSec // 60
+        secs = totalSec % 60
+        return f"{minutes}:{secs:02d}"
+    hours = totalSec // 3600
+    remainder = totalSec % 3600
+    minutes = remainder // 60
+    secs = remainder % 60
+    return f"{hours}:{minutes:02d}:{secs:02d}"
+
+
 def _writeHumanReadableTxt(pairedDir: Path, segmentsList: list[tuple[str, float, float]]) -> None:
     """
-    Write human-readable transcript (TXT). Otter-style: speaker/paragraph then text.
+    Write human-readable transcript (TXT). Otter-style: speaker line with time offset then text.
+    Format per segment: "Speaker 1 M:SS" (or H:MM:SS) on one line, transcript text on the next.
     Pre-diarization we use a single "Speaker 1" for all segments.
     segmentsList: list of (text, start, end) per segment.
     """
     outPath = pairedDir / HUMAN_READABLE_TXT_FILENAME
     lines: list[str] = []
-    for text in segmentsList:
-        sText = (text[0] if isinstance(text, tuple) else text).strip()
+    for seg in segmentsList:
+        if isinstance(seg, tuple) and len(seg) >= 3:
+            sText = (seg[0] or "").strip()
+            startSec = float(seg[1])
+        else:
+            sText = (seg[0] if isinstance(seg, tuple) else seg).strip()
+            startSec = 0.0
         if sText:
-            lines.append("Speaker 1:")
+            timeStr = _formatTimestamp(startSec)
+            lines.append(f"Speaker 1 {timeStr}")
             lines.append(sText)
             lines.append("")
     with open(outPath, "w", encoding="utf-8") as f:

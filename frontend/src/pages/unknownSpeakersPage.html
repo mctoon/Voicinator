@@ -7,11 +7,18 @@
   <link rel="stylesheet" href="/styles/main.css">
 </head>
 <body>
-  <header class="page-header">
-    <h1>Unknown Speakers</h1>
-    <nav><a href="/">Inbox</a> | <a href="/unknownSpeakersPage.html">Unknown speakers</a></nav>
-  </header>
-  <main class="page-main">
+  <div class="app-layout">
+    <nav class="nav-sidebar" aria-label="Main navigation">
+      <ul>
+        <li><a href="/">Videos</a></li>
+        <li><a href="/summarizationConfigPage.html">Config</a></li>
+      </ul>
+    </nav>
+    <div class="page-content">
+      <header class="page-header">
+        <h1>Unknown Speakers</h1>
+      </header>
+      <main class="page-main">
     <section class="speakers-section">
       <h2>Files needing speaker identification</h2>
       <div id="fileList" class="file-list"></div>
@@ -37,7 +44,9 @@
         <button id="resolveBtn" type="button">Resolve</button>
       </div>
     </section>
-  </main>
+      </main>
+    </div>
+  </div>
   <script src="/services/apiClient.js"></script>
   <script src="/services/pipelineSpeakersApi.js"></script>
   <script src="/pages/unknownSpeakersPage.js"></script>

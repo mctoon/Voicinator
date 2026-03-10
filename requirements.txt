@@ -1,9 +1,13 @@
 # Inbox-queue web UI (001). Python 3.11+
 Flask>=3.0
 tomli>=2.0; python_version < "3.11"
+tomli-w>=1.0
 ruff>=0.1
 # path handling: pathlib in stdlib; config: TOML via tomli or tomllib (3.11+)
 
 # Pipeline (002): transcription = Whisper Large-v3; diarization = NeMo MSDD (no Pyannote).
 # Step 3: faster-whisper. Step 4: NeMo installed from requirements-nemo.txt when Python 3.10–3.13 (see run.sh).
 faster-whisper>=1.0
+
+# Step 6 summarization: remote LLMs via OpenAI-compatible API (e.g. x.ai Grok). Same client as OpenClaw/x.ai docs.
+openai>=1.0

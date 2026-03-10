@@ -6,6 +6,7 @@ Step 5: if any unknown speaker -> move to step 5 and stop; else move to 6. Stub:
 from __future__ import annotations
 
 import logging
+import time
 from pathlib import Path
 
 from backend.src.models.pipelineStepPlan import getFinalFolderName, getStepFolderOrder
@@ -13,6 +14,7 @@ from backend.src.services.pipelineDiscoveryService import (
     discoverMediaInStep1,
     getPipelineBasePathsResolved,
 )
+from backend.src.services.mediaLogService import MediaLog
 from backend.src.services.pipelineMoveService import getNextStepDir, moveToNextStep
 from backend.src.services.pipeline.step2_audio import processStep2
 from backend.src.services.pipeline.step3_transcribe import processStep3
@@ -32,35 +34,69 @@ def runNextStepForOneFile(
     """
     Run one step for a single file: run step processor (if step 2 or 3), then move
     file and paired folder to the next step. Single file, one step only.
-    Returns (success, error_message).
+    Returns (success, error_message). Writes events to sidecar pipeline.log.
     """
+    mediaLog = MediaLog(sPairedFolderPath)
+    mediaLog.runStart(sMediaPath)
+
     if not sMediaPath or not Path(sMediaPath).exists():
+        mediaLog.runFailed("Media path missing or does not exist")
         return False, "Media path missing or does not exist"
     nextDir = getNextStepDir(sMediaPath, sPairedFolderPath)
     if not nextDir:
+        mediaLog.runFailed("No next step (file may already be in final folder)")
         return False, "No next step (file may already be in final folder)"
     stepOrder = getStepFolderOrder()
     nextStepName = Path(nextDir).name
-    if nextStepName == stepOrder[1]:
-        ok, err = processStep2(sMediaPath, sPairedFolderPath)
-    elif nextStepName == stepOrder[2]:
-        ok, err = processStep3(sMediaPath, sPairedFolderPath)
-    elif nextStepName == stepOrder[3]:
-        ok, err = processStep4(sMediaPath, sPairedFolderPath)
-    elif nextStepName == stepOrder[4]:
-        ok, err = processStep5(sMediaPath, sPairedFolderPath)
-    else:
-        ok, err = True, None
+    currentStepName = Path(sMediaPath).parent.name
+
+    mediaLog.stepStart(nextStepName)
+    t0 = time.perf_counter()
+    try:
+        if nextStepName == stepOrder[1]:
+            ok, err = processStep2(sMediaPath, sPairedFolderPath)
+        elif nextStepName == stepOrder[2]:
+            ok, err = processStep3(sMediaPath, sPairedFolderPath)
+        elif nextStepName == stepOrder[3]:
+            ok, err = processStep4(sMediaPath, sPairedFolderPath)
+        elif nextStepName == stepOrder[4]:
+            ok, err = processStep5(sMediaPath, sPairedFolderPath)
+        elif nextStepName == stepOrder[5]:
+            ok, err = processStep5(sMediaPath, sPairedFolderPath)
+        elif nextStepName == stepOrder[6]:
+            ok, err = processStep6(sMediaPath, sPairedFolderPath)  # summarization for "Videos 7 summarization done"
+        elif nextStepName == stepOrder[7]:
+            ok, err = processStep7(sMediaPath, sPairedFolderPath)
+        elif nextStepName == getFinalFolderName():
+            ok, err = processStep8(sMediaPath, sPairedFolderPath)
+        else:
+            ok, err = True, None
+    except Exception as e:
+        logger.exception("Step %s failed for %s", nextStepName, sMediaPath)
+        ok, err = False, str(e)
+    durationSec = time.perf_counter() - t0
+    mediaLog.stepEnd(nextStepName, ok, err, durationSec=durationSec)
     if not ok:
+        mediaLog.runFailed(err or "Step processor failed", sPairedFolderPathOverride=sPairedFolderPath)
         return False, err or "Step processor failed"
     # Moving from step 5 to step 6: only if no unknown speakers
     if nextStepName == stepOrder[5]:
         hasUnknown, _ = hasAnyUnknownSpeaker(sMediaPath, sPairedFolderPath)
         if hasUnknown:
+            mediaLog.runStoppedInStep5(
+                "Unknown speakers; file remains in step 5",
+                sPairedFolderPathOverride=sPairedFolderPath,
+            )
             return False, "Unknown speakers; file remains in step 5"
     ok, err = moveToNextStep(sMediaPath, sPairedFolderPath, nextDir)
+    newPaired = str(Path(nextDir) / Path(sMediaPath).stem)
+    if ok:
+        mediaLog.setPairedPath(newPaired)
+    mediaLog.moveResult(ok, currentStepName, nextStepName, err)
     if not ok:
+        mediaLog.runFailed(err or "Move failed", sPairedFolderPathOverride=sPairedFolderPath)
         return False, err or "Move failed"
+    mediaLog.runComplete(nextDir, sPairedFolderPathOverride=newPaired)
     logger.info("Moved one step: %s -> %s", sMediaPath, nextDir)
     return True, None
 
@@ -86,6 +122,8 @@ def runOnePass(iLimit: int | None = None) -> dict:
         pairedPath = item.get("pairedFolderPath")
         if not mediaPath or not Path(mediaPath).exists():
             continue
+        mediaLog = MediaLog(pairedPath)
+        mediaLog.runStart(mediaPath)
         try:
             currentPath = mediaPath
             currentPaired = pairedPath
@@ -93,27 +131,42 @@ def runOnePass(iLimit: int | None = None) -> dict:
             for stepName in stepOrder[1:]:
                 nextDir = getNextStepDir(currentPath, currentPaired)
                 if not nextDir:
+                    mediaLog.info("No next step; already at final folder or invalid state")
                     break
                 nextStepName = Path(nextDir).name
-                # Run step processor before move when moving to step 2, 3, or 4
-                if nextStepName == stepOrder[1]:
-                    ok, err = processStep2(currentPath, currentPaired)
-                elif nextStepName == stepOrder[2]:
-                    ok, err = processStep3(currentPath, currentPaired)
-                elif nextStepName == stepOrder[3]:
-                    ok, err = processStep4(currentPath, currentPaired)
-                elif nextStepName == stepOrder[4]:
-                    ok, err = processStep5(currentPath, currentPaired)
-                elif nextStepName == stepOrder[5]:
-                    ok, err = processStep6(currentPath, currentPaired)
-                elif nextStepName == stepOrder[6]:
-                    ok, err = processStep7(currentPath, currentPaired)
-                elif nextStepName == stepOrder[7]:
-                    ok, err = processStep8(currentPath, currentPaired)
-                else:
-                    ok, err = True, None
+                currentStepName = Path(currentPath).parent.name
+                mediaLog.stepStart(nextStepName)
+                t0 = time.perf_counter()
+                try:
+                    if nextStepName == stepOrder[1]:
+                        ok, err = processStep2(currentPath, currentPaired)
+                    elif nextStepName == stepOrder[2]:
+                        ok, err = processStep3(currentPath, currentPaired)
+                    elif nextStepName == stepOrder[3]:
+                        ok, err = processStep4(currentPath, currentPaired)
+                    elif nextStepName == stepOrder[4]:
+                        ok, err = processStep5(currentPath, currentPaired)
+                    elif nextStepName == stepOrder[5]:
+                        ok, err = processStep5(currentPath, currentPaired)
+                    elif nextStepName == stepOrder[6]:
+                        ok, err = processStep6(currentPath, currentPaired)  # summarization
+                    elif nextStepName == stepOrder[7]:
+                        ok, err = processStep7(currentPath, currentPaired)
+                    elif nextStepName == getFinalFolderName():
+                        ok, err = processStep8(currentPath, currentPaired)
+                    else:
+                        ok, err = True, None
+                except Exception as e:
+                    logger.exception("Step %s failed for %s", nextStepName, currentPath)
+                    ok, err = False, str(e)
+                durationSec = time.perf_counter() - t0
+                mediaLog.stepEnd(nextStepName, ok, err, durationSec=durationSec)
                 if not ok:
                     errorsList.append(f"{currentPath}: {err}")
+                    mediaLog.runFailed(
+                        err or "Step processor failed",
+                        sPairedFolderPathOverride=currentPaired,
+                    )
                     break
                 # Step 5 -> 6: move only if no unknown speakers; else leave in step 5
                 if nextStepName == stepOrder[5]:
@@ -121,21 +174,37 @@ def runOnePass(iLimit: int | None = None) -> dict:
                     if hasUnknown:
                         iMovedToStep5 += 1
                         iProcessed += 1
+                        mediaLog.runStoppedInStep5(
+                            "Unknown speakers; file remains in step 5",
+                            sPairedFolderPathOverride=currentPaired,
+                        )
                         break  # Leave file in step 5
                 ok, err = moveToNextStep(currentPath, currentPaired, nextDir)
+                if ok:
+                    stem = Path(currentPath).stem
+                    currentPath = str(Path(nextDir) / Path(currentPath).name)
+                    currentPaired = str(Path(nextDir) / stem)
+                    mediaLog.setPairedPath(currentPaired)
+                mediaLog.moveResult(ok, currentStepName, nextStepName, err)
                 if not ok:
                     errorsList.append(f"{currentPath}: {err}")
+                    mediaLog.runFailed(
+                        err or "Move failed",
+                        sPairedFolderPathOverride=currentPaired,
+                    )
                     break
-                stem = Path(currentPath).stem
-                currentPath = str(Path(nextDir) / Path(currentPath).name)
-                currentPaired = str(Path(nextDir) / stem)
                 logger.info("Moved to %s: %s", stepName, currentPath)
             else:
                 iMovedToVideos += 1
                 iProcessed += 1
+                mediaLog.runComplete(
+                    str(Path(currentPath).parent),
+                    sPairedFolderPathOverride=currentPaired,
+                )
         except Exception as e:
             logger.exception("Pipeline run error for %s", mediaPath)
             errorsList.append(f"{mediaPath}: {e}")
+            mediaLog.runFailed(str(e), sPairedFolderPathOverride=currentPaired)
 
     logger.info(
         "Pipeline run end: processed=%s movedToStep5=%s movedToVideos=%s errors=%s",
