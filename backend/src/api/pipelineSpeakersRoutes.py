@@ -25,9 +25,11 @@ from backend.src.services.pipeline.speakerResolver import (
     matchSegment as resolverMatchSegment,
     resolveSegment as resolverResolveSegment,
 )
+from backend.src.services.pipeline.step3_transcribe import WORD_LEVEL_JSON_FILENAME
 from backend.src.services.pipeline.step4_diarize import SEGMENTS_JSON_FILENAME
 from backend.src.services.pipelineMoveService import getNextStepDir, moveToNextStep
 from backend.src.models.pipelineStepPlan import getStepFolderOrder, getFinalFolderName
+from backend.src.services.pipeline.transcriptUpdateService import backupAndRewriteTranscripts
 
 logger = logging.getLogger(__name__)
 
@@ -58,6 +60,8 @@ def _loadSegmentsWithResolvedSpeakers(sPairedFolderPath: str, sMediaId: str) -> 
             "end": end,
             "label": seg.get("label", ""),
             "speakerId": speakerId,
+            "suggestedSpeakerId": None,
+            "suggestedSpeakerName": None,
         }
         result.append(out)
     return result
@@ -111,11 +115,113 @@ def _moveFileThroughToVideos(sMediaPath: str, sPairedFolderPath: str) -> tuple[b
     return True, None
 
 
+def _segmentCountForPairedFolder(sPairedFolderPath: str) -> int:
+    """Return number of segments in paired folder (0 if none or missing)."""
+    p = _segmentsPathForPairedFolder(sPairedFolderPath)
+    if not p.exists():
+        return 0
+    try:
+        data = json.loads(p.read_text(encoding="utf-8"))
+        segmentsList = data.get("segments") or []
+        return len(segmentsList) if isinstance(segmentsList, list) else 0
+    except Exception:
+        return 0
+
+
+def _moveToStep6IfZeroSpeakers(sMediaPath: str, sPairedFolderPath: str) -> bool:
+    """Move media and paired folder from step 5 to step 6 (speakers matched). Returns True if moved or already gone."""
+    nextDir = getNextStepDir(sMediaPath, sPairedFolderPath)
+    if not nextDir:
+        return False
+    if not Path(sMediaPath).is_file():
+        return True
+    ok, _ = moveToNextStep(sMediaPath, sPairedFolderPath, nextDir)
+    return ok
+
+
+def _loadTranscriptWordsAndSegments(sPairedFolderPath: str, sMediaId: str) -> tuple[list[dict], list[dict]] | None:
+    """
+    Load transcript_words.json and segments from paired folder; merge so each word has segmentId/speakerId.
+    Returns (words, segments) or None if transcript or segments missing.
+    """
+    paired = Path(sPairedFolderPath)
+    wordsPath = paired / WORD_LEVEL_JSON_FILENAME
+    segPath = paired / SEGMENTS_JSON_FILENAME
+    if not wordsPath.exists() or not segPath.exists():
+        return None
+    try:
+        wordsData = json.loads(wordsPath.read_text(encoding="utf-8"))
+        wordsList = wordsData if isinstance(wordsData, list) else (wordsData.get("words") or wordsData.get("segments") or [])
+        if not isinstance(wordsList, list):
+            wordsList = []
+    except Exception:
+        return None
+    segments = _loadSegmentsWithResolvedSpeakers(sPairedFolderPath, sMediaId)
+    # Assign each word to a segment by time overlap (word mid in segment range)
+    resultWords: list[dict] = []
+    for w in wordsList:
+        word = str(w.get("word", ""))
+        start = float(w.get("start", 0))
+        end = float(w.get("end", start))
+        mid = (start + end) / 2
+        segmentId = None
+        speakerId = None
+        for seg in segments:
+            if seg.get("start", 0) <= mid <= seg.get("end", 0):
+                segmentId = seg.get("segmentId")
+                speakerId = seg.get("speakerId")
+                break
+        resultWords.append({
+            "word": word,
+            "start": start,
+            "end": end,
+            "segmentId": segmentId,
+            "speakerId": speakerId,
+        })
+    return resultWords, segments
+
+
 def register(bp: Blueprint) -> None:
     @bp.route("/speakers/files", methods=["GET"])
     def getFiles():
-        items = discoverMediaInUnknownSpeakersStep()
+        rawItems = discoverMediaInUnknownSpeakersStep()
+        items = []
+        for item in rawItems:
+            pairedPath = item.get("pairedFolderPath", "")
+            count = _segmentCountForPairedFolder(pairedPath)
+            if count == 0:
+                _moveToStep6IfZeroSpeakers(item.get("mediaPath", ""), pairedPath)
+                continue
+            items.append(item)
         return jsonify({"items": items, "total": len(items)})
+
+    @bp.route("/speakers/files/<mediaId>/transcript", methods=["GET"])
+    def getTranscript(mediaId: str):
+        item = getMediaItemByMediaId(mediaId)
+        if not item:
+            return jsonify({"error": "Not found"}), 404
+        pairedPath = item.get("pairedFolderPath", "")
+        merged = _loadTranscriptWordsAndSegments(pairedPath, mediaId)
+        if merged is None:
+            return jsonify({"error": "Transcript or media not found"}), 404
+        words, segments = merged
+        return jsonify({"words": words, "segments": segments})
+
+    @bp.route("/speakers/files/<mediaId>/media", methods=["GET"])
+    def getMediaFile(mediaId: str):
+        """Serve the media file for playback (client-side seek for click-to-play)."""
+        item = getMediaItemByMediaId(mediaId)
+        if not item:
+            return jsonify({"error": "Not found"}), 404
+        mediaPath = item.get("mediaPath", "")
+        path = Path(mediaPath)
+        if not path.is_file():
+            return jsonify({"error": "Media not found"}), 404
+        bases = getPipelineBasePathsResolved()
+        resolved = path.resolve()
+        if not any(resolved.is_relative_to(Path(b).resolve()) for b in bases):
+            return jsonify({"error": "Forbidden"}), 403
+        return send_file(path, as_attachment=False, download_name=path.name)
 
     @bp.route("/speakers/files/<mediaId>/segments", methods=["GET"])
     def getSegments(mediaId: str):
@@ -192,26 +298,62 @@ def register(bp: Blueprint) -> None:
         name = body.get("name")
         if name is not None:
             name = str(name).strip() or None
-        ok, err = resolverResolveSegment(mediaId, segmentId, resolution, speakerId, name)
+        item = getMediaItemByMediaId(mediaId)
+        pairedPath = item.get("pairedFolderPath", "") if item else ""
+        segStart, segEnd = None, None
+        if pairedPath:
+            segments = _loadSegmentsWithResolvedSpeakers(pairedPath, mediaId)
+            seg = next((s for s in segments if s.get("segmentId") == segmentId), None)
+            if seg is not None:
+                segStart = float(seg.get("start", 0))
+                segEnd = float(seg.get("end", 0))
+        ok, err, assignedName = resolverResolveSegment(
+            mediaId, segmentId, resolution, speakerId, name, segStart, segEnd
+        )
         if not ok:
             return jsonify({"error": err or "Resolve failed"}), 400
-        # Auto-move when all segments for this file are resolved
-        item = getMediaItemByMediaId(mediaId)
-        if item and _allSegmentsResolved(item.get("pairedFolderPath", ""), mediaId):
-            moveOk, moveErr = _moveFileThroughToVideos(
-                item.get("mediaPath", ""),
-                item.get("pairedFolderPath", ""),
-            )
-            if moveOk:
-                logger.info("Auto-moved %s to Videos (all resolved)", mediaId)
-            else:
-                logger.warning("Auto-move failed for %s: %s", mediaId, moveErr)
-        return jsonify({"ok": True})
+        response = {"ok": True}
+        if assignedName is not None:
+            response["assignedName"] = assignedName
+        return jsonify(response)
 
     @bp.route("/speakers/speakers", methods=["GET"])
     def getSpeakers():
         speakers = resolverListSpeakers()
         return jsonify({"speakers": speakers})
+
+    @bp.route("/speakers/files/<mediaId>/complete", methods=["POST"])
+    def postComplete(mediaId: str):
+        """Complete identification: verify all resolved, backup+rewrite transcripts, move to step 6. Contract §5."""
+        item = getMediaItemByMediaId(mediaId)
+        if not item:
+            return jsonify({"error": "Not found"}), 404
+        pairedPath = item.get("pairedFolderPath", "")
+        mediaPath = item.get("mediaPath", "")
+        if not Path(mediaPath).is_file():
+            return jsonify({"error": "File already moved or invalid"}), 404
+        if not _allSegmentsResolved(pairedPath, mediaId):
+            return jsonify({"error": "Not all segments resolved"}), 400
+        ok, err = backupAndRewriteTranscripts(pairedPath, mediaId)
+        if not ok:
+            return jsonify({"error": err or "Transcript update failed"}), 400
+        nextDir = getNextStepDir(mediaPath, pairedPath)
+        if not nextDir:
+            return jsonify({"error": "Cannot determine next step"}), 500
+        Path(nextDir).mkdir(parents=True, exist_ok=True)
+        moveOk, moveErr = moveToNextStep(mediaPath, pairedPath, nextDir)
+        if not moveOk:
+            return jsonify({"error": moveErr or "Move failed"}), 500
+        return jsonify({"ok": True})
+
+    @bp.route("/speakers/files/<mediaId>/can-complete", methods=["GET"])
+    def getCanComplete(mediaId: str):
+        """Return whether all segments are resolved. Contract §6."""
+        item = getMediaItemByMediaId(mediaId)
+        if not item:
+            return jsonify({"canComplete": False})
+        can = _allSegmentsResolved(item.get("pairedFolderPath", ""), mediaId)
+        return jsonify({"canComplete": can})
 
     @bp.route("/speakers/files/<mediaId>/move-to-videos", methods=["POST"])
     def postMoveToVideos(mediaId: str):

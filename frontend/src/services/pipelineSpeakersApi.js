@@ -9,6 +9,17 @@ async function getSpeakersFiles() {
   return r.json();
 }
 
+async function getTranscript(mediaId) {
+  const r = await fetch(`${pipelineBase}/speakers/files/${encodeURIComponent(mediaId)}/transcript`);
+  const data = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(data.error || 'Transcript not found');
+  return data;
+}
+
+function getMediaFileUrl(mediaId) {
+  return `${pipelineBase}/speakers/files/${encodeURIComponent(mediaId)}/media`;
+}
+
 async function getSegments(mediaId) {
   const r = await fetch(`${pipelineBase}/speakers/files/${encodeURIComponent(mediaId)}/segments`);
   if (!r.ok) throw new Error('Failed to fetch segments');
@@ -34,6 +45,21 @@ async function getSpeakers() {
   const r = await fetch(`${pipelineBase}/speakers/speakers`);
   if (!r.ok) throw new Error('Failed to fetch speakers');
   return r.json();
+}
+
+async function postComplete(mediaId) {
+  const r = await fetch(`${pipelineBase}/speakers/files/${encodeURIComponent(mediaId)}/complete`, {
+    method: 'POST',
+  });
+  const data = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(data.error || 'Complete failed');
+  return data;
+}
+
+async function getCanComplete(mediaId) {
+  const r = await fetch(`${pipelineBase}/speakers/files/${encodeURIComponent(mediaId)}/can-complete`);
+  const data = await r.json().catch(() => ({}));
+  return data.canComplete === true;
 }
 
 async function postMoveToVideos(mediaId) {
