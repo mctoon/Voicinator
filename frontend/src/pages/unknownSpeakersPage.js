@@ -1,41 +1,29 @@
 /**
- * Unknown speakers page: list files in step 5, load segments, play segment, resolve (existing/new/placeholder).
- * When all segments resolved, backend auto-moves file to Videos; no separate button required.
+ * Unknown speakers page: list files in step 5; transcript in transcript.txt style (sections by speaker and time);
+ * play/pause at bottom; clicking speaker name opens identify popup (list, filter, Enter to create, skip).
  */
 (function () {
   const fileListEl = document.getElementById('fileList');
   const segmentSectionEl = document.getElementById('segmentSection');
-  const segmentListEl = document.getElementById('segmentList');
-  const segmentAudioEl = document.getElementById('segmentAudio');
-  const existingSpeakerSelect = document.getElementById('existingSpeakerSelect');
-  const newSpeakerNameEl = document.getElementById('newSpeakerName');
-  const placeholderNameEl = document.getElementById('placeholderName');
-  const resolveBtn = document.getElementById('resolveBtn');
+  const transcriptPanelEl = document.getElementById('transcriptPanel');
+  const fullMediaEl = document.getElementById('fullMedia');
+  const completeBtn = document.getElementById('completeBtn');
   const messageEl = document.getElementById('message');
+  const backToListBtn = document.getElementById('backToListBtn');
+  const identifyPopupEl = document.getElementById('identifyPopup');
+  const identifyFilterEl = document.getElementById('identifyFilter');
+  const identifySpeakerListEl = document.getElementById('identifySpeakerList');
+  const identifySkipBtn = document.getElementById('identifySkipBtn');
+  const identifyCancelBtn = document.getElementById('identifyCancelBtn');
 
   let currentMediaId = null;
   let currentSegmentId = null;
+  let currentSegments = [];
   let speakersList = [];
 
   function showMessage(text, isError) {
     messageEl.textContent = text || '';
     messageEl.className = 'message' + (isError ? ' error' : '');
-  }
-
-  function renderFileList(items) {
-    if (!items || items.length === 0) {
-      fileListEl.innerHTML = '<p>No files in unknown-speakers step.</p>';
-      return;
-    }
-    fileListEl.innerHTML = items.map(function (item) {
-      const name = (item.mediaPath && item.mediaPath.split('/').pop()) || item.mediaId || 'Unknown';
-      return '<button type="button" class="file-item" data-media-id="' + escapeHtml(item.mediaId) + '">' + escapeHtml(name) + '</button>';
-    }).join('');
-    fileListEl.querySelectorAll('.file-item').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        selectFile(btn.dataset.mediaId);
-      });
-    });
   }
 
   function escapeHtml(s) {
@@ -45,125 +33,288 @@
     return div.innerHTML;
   }
 
-  function renderSegmentList(segments) {
-    if (!segments || segments.length === 0) {
-      segmentListEl.innerHTML = '<p>No segments.</p>';
+  function formatTime(seconds) {
+    const m = Math.floor(seconds / 60);
+    const s = Math.floor(seconds % 60);
+    return m + ':' + (s < 10 ? '0' : '') + s;
+  }
+
+  function renderFileList(items) {
+    if (!items || items.length === 0) {
+      fileListEl.innerHTML = '<p>No videos need speaker identification.</p>';
       return;
     }
-    segmentListEl.innerHTML = segments.map(function (seg) {
-      const resolved = seg.speakerId ? ' resolved' : '';
-      return '<button type="button" class="segment-item' + resolved + '" data-segment-id="' + escapeHtml(seg.segmentId) + '" data-start="' + seg.start + '" data-end="' + seg.end + '">' +
-        escapeHtml(seg.segmentId) + ' ' + seg.start.toFixed(1) + '–' + seg.end.toFixed(1) + (seg.speakerId ? ' (' + escapeHtml(seg.speakerId) + ')' : '') + '</button>';
+    fileListEl.innerHTML = items.map(function (item) {
+      const filename = (item.mediaPath && item.mediaPath.split('/').pop()) || item.mediaId || 'Unknown';
+      const channel = item.channelName || '';
+      const label = channel ? escapeHtml(channel) + ' — ' + escapeHtml(filename) : escapeHtml(filename);
+      return '<button type="button" class="file-item" data-media-id="' + escapeHtml(item.mediaId) + '">' + label + '</button>';
     }).join('');
-    segmentListEl.querySelectorAll('.segment-item').forEach(function (btn) {
+    fileListEl.querySelectorAll('.file-item').forEach(function (btn) {
       btn.addEventListener('click', function () {
-        selectSegment(btn.dataset.segmentId, parseFloat(btn.dataset.start), parseFloat(btn.dataset.end));
+        selectFile(btn.dataset.mediaId);
       });
     });
+  }
+
+  function updateCompleteButtonState(segments) {
+    if (!completeBtn) return;
+    const allResolved = segments && segments.length > 0 && segments.every(function (s) { return s.speakerId; });
+    completeBtn.disabled = !allResolved;
+  }
+
+  /** Group words by segmentId for transcript.txt-style sections. */
+  function groupWordsBySegment(words) {
+    const bySegment = {};
+    (words || []).forEach(function (w) {
+      const segId = w.segmentId || '';
+      if (!bySegment[segId]) bySegment[segId] = [];
+      bySegment[segId].push(w);
+    });
+    return bySegment;
+  }
+
+  /**
+   * Render transcript in transcript.txt style: sections labeled by speaker and time.
+   * Speaker name/label is clickable when unresolved; clicking section words starts playback.
+   */
+  function renderTranscript(words, segments) {
+    currentSegments = segments || [];
+    if (!words || words.length === 0) {
+      transcriptPanelEl.innerHTML = '<p>No transcript.</p>';
+      updateCompleteButtonState(currentSegments);
+      return;
+    }
+    const wordsBySegment = groupWordsBySegment(words);
+    const segmentOrder = (segments || []).slice();
+    const htmlParts = [];
+    segmentOrder.forEach(function (seg) {
+      const segId = seg.segmentId || '';
+      const segWords = wordsBySegment[segId] || [];
+      const startTime = seg.start != null ? seg.start : (segWords[0] && segWords[0].start) || 0;
+      const timeStr = formatTime(startTime);
+      const displayName = seg.speakerId || seg.label || segId || 'Speaker';
+      const isResolved = !!seg.speakerId;
+      const suggested = seg.suggestedSpeakerName ? ' (suggested: ' + escapeHtml(seg.suggestedSpeakerName) + ')' : '';
+      const speakerLineClass = isResolved ? 'speaker-label resolved' : 'speaker-label';
+      const resolvedMarker = isResolved ? ' <span class="resolved-marker">✓</span>' : '';
+      const speakerHtml = '<span class="' + speakerLineClass + '" data-segment-id="' + escapeHtml(segId) + '" data-start="' + startTime + '" data-resolved="' + (isResolved ? '1' : '0') + '">' + escapeHtml(displayName) + suggested + resolvedMarker + '</span>';
+      const line1 = speakerHtml + ' ' + timeStr;
+      const wordsHtml = segWords.map(function (w) {
+        const start = Number(w.start);
+        const end = Number(w.end || start);
+        return '<span class="section-word" role="button" tabindex="0" data-start="' + start + '" data-end="' + end + '">' + escapeHtml(w.word) + '</span>';
+      }).join(' ');
+      htmlParts.push('<div class="transcript-section" data-segment-id="' + escapeHtml(segId) + '">' +
+        '<div class="speaker-line">' + line1 + '</div>' +
+        '<div class="section-words" data-start="' + startTime + '">' + wordsHtml + '</div></div>');
+    });
+    transcriptPanelEl.innerHTML = htmlParts.join('\n');
+
+    transcriptPanelEl.querySelectorAll('.speaker-label:not(.resolved)').forEach(function (el) {
+      el.addEventListener('click', function () {
+        const segId = el.dataset.segmentId;
+        if (!segId) return;
+        currentSegmentId = segId;
+        openIdentifyPopup();
+      });
+    });
+    transcriptPanelEl.querySelectorAll('.section-words').forEach(function (el) {
+      el.addEventListener('click', function (e) {
+        var start;
+        if (e.target && e.target.classList && e.target.classList.contains('section-word')) {
+          start = parseFloat(e.target.dataset.start);
+        } else {
+          start = parseFloat(el.dataset.start);
+        }
+        if (fullMediaEl.src && !isNaN(start)) {
+          fullMediaEl.currentTime = start;
+          fullMediaEl.play();
+        }
+      });
+    });
+    updateCompleteButtonState(currentSegments);
+  }
+
+  function openIdentifyPopup() {
+    if (!identifyPopupEl) return;
+    identifyPopupEl.style.display = 'flex';
+    identifyFilterEl.value = '';
+    renderIdentifySpeakerList('');
+    identifyFilterEl.focus();
+    identifyFilterEl.addEventListener('keydown', onIdentifyFilterKeydown);
+    identifySpeakerListEl.addEventListener('click', onIdentifyListClick);
+  }
+
+  function closeIdentifyPopup() {
+    if (!identifyPopupEl) return;
+    identifyPopupEl.style.display = 'none';
+    identifyFilterEl.removeEventListener('keydown', onIdentifyFilterKeydown);
+    identifySpeakerListEl.removeEventListener('click', onIdentifyListClick);
+  }
+
+  function renderIdentifySpeakerList(filterText) {
+    const q = (filterText || '').trim().toLowerCase();
+    const filtered = q
+      ? speakersList.filter(function (s) {
+          const name = (s.name || s.id || '').toLowerCase();
+          return name.indexOf(q) !== -1;
+        })
+      : speakersList.slice();
+    identifySpeakerListEl.innerHTML = filtered.map(function (s) {
+      const name = s.name || s.id || '';
+      return '<div role="option" class="identify-option" data-speaker-id="' + escapeHtml(s.id) + '" data-speaker-name="' + escapeHtml(name) + '">' + escapeHtml(name) + '</div>';
+    }).join('');
+  }
+
+  function onIdentifyFilterKeydown(e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const typed = (identifyFilterEl.value || '').trim();
+      const optionEl = identifySpeakerListEl.querySelector('[role="option"]');
+      const firstMatch = optionEl ? (optionEl.dataset.speakerName || '').trim() : '';
+      if (typed && firstMatch && firstMatch.toLowerCase() === typed.toLowerCase()) {
+        doResolveExisting(optionEl.dataset.speakerId);
+        return;
+      }
+      if (typed && !speakersList.some(function (s) { return (s.name || s.id || '').trim().toLowerCase() === typed.toLowerCase(); })) {
+        doResolveNew(typed);
+        return;
+      }
+    }
+  }
+
+  function onIdentifyListClick(e) {
+    const option = e.target.closest('[role="option"]');
+    if (!option) return;
+    const speakerId = option.dataset.speakerId;
+    if (speakerId) doResolveExisting(speakerId);
+  }
+
+  function doResolveExisting(speakerId) {
+    if (!currentMediaId || !currentSegmentId || !speakerId) return;
+    showMessage('Resolving…');
+    postResolve({ mediaId: currentMediaId, segmentId: currentSegmentId, resolution: 'existing', speakerId: speakerId })
+      .then(function (data) {
+        closeIdentifyPopup();
+        showMessage(data.assignedName ? 'Resolved as ' + data.assignedName : 'Resolved.');
+        return getTranscript(currentMediaId);
+      })
+      .then(function (data) {
+        renderTranscript(data.words, data.segments);
+        showMessage('Resolved. Complete identification when all segments are resolved.');
+      })
+      .catch(function (err) {
+        showMessage(err.message, true);
+      });
+  }
+
+  function doResolveNew(name) {
+    if (!currentMediaId || !currentSegmentId || !name || !name.trim()) return;
+    showMessage('Resolving…');
+    postResolve({ mediaId: currentMediaId, segmentId: currentSegmentId, resolution: 'new', name: name.trim() })
+      .then(function (data) {
+        closeIdentifyPopup();
+        showMessage(data.assignedName ? 'Resolved as ' + data.assignedName : 'Resolved.');
+        return getTranscript(currentMediaId);
+      })
+      .then(function (data) {
+        renderTranscript(data.words, data.segments);
+        showMessage('Resolved. Complete identification when all segments are resolved.');
+      })
+      .catch(function (err) {
+        showMessage(err.message, true);
+      });
+  }
+
+  function doResolvePlaceholder() {
+    if (!currentMediaId || !currentSegmentId) return;
+    showMessage('Resolving…');
+    postResolve({ mediaId: currentMediaId, segmentId: currentSegmentId, resolution: 'placeholder' })
+      .then(function (data) {
+        closeIdentifyPopup();
+        showMessage(data.assignedName ? 'Resolved as ' + data.assignedName : 'Resolved.');
+        return getTranscript(currentMediaId);
+      })
+      .then(function (data) {
+        renderTranscript(data.words, data.segments);
+        showMessage('Resolved. Complete identification when all segments are resolved.');
+      })
+      .catch(function (err) {
+        showMessage(err.message, true);
+      });
   }
 
   function selectFile(mediaId) {
     currentMediaId = mediaId;
     currentSegmentId = null;
     segmentSectionEl.style.display = 'block';
-    segmentListEl.innerHTML = '';
-    segmentAudioEl.src = '';
-    showMessage('Loading segments…');
-    getSegments(mediaId)
+    transcriptPanelEl.innerHTML = '';
+    fullMediaEl.src = '';
+    showMessage('Loading transcript and segments…');
+    fullMediaEl.src = getMediaFileUrl(mediaId);
+    getSpeakers().then(function (data) {
+      speakersList = data.speakers || [];
+    }).catch(function () { speakersList = []; });
+    getTranscript(mediaId)
       .then(function (data) {
-        renderSegmentList(data.segments);
+        renderTranscript(data.words, data.segments);
         showMessage('');
       })
       .catch(function (e) {
-        showMessage(e.message, true);
+        showMessage(e.message || 'Failed to load. Use "Back to list" to return.', true);
       });
-    loadSpeakersForSelect();
   }
 
-  function selectSegment(segmentId, start, end) {
-    currentSegmentId = segmentId;
-    segmentListEl.querySelectorAll('.segment-item').forEach(function (el) {
-      el.classList.toggle('selected', el.dataset.segmentId === segmentId);
+  if (backToListBtn) {
+    backToListBtn.addEventListener('click', function () {
+      segmentSectionEl.style.display = 'none';
+      currentMediaId = null;
+      currentSegmentId = null;
+      loadFiles();
     });
-    const url = getSegmentAudioUrl(currentMediaId, segmentId);
-    segmentAudioEl.src = url;
-    segmentAudioEl.load();
   }
 
-  function loadSpeakersForSelect() {
-    getSpeakers()
-      .then(function (data) {
-        speakersList = data.speakers || [];
-        existingSpeakerSelect.innerHTML = '<option value="">-- Select --</option>' +
-          speakersList.map(function (s) {
-            return '<option value="' + escapeHtml(s.id) + '">' + escapeHtml(s.name || s.id) + '</option>';
-          }).join('');
-      })
-      .catch(function () {
-        existingSpeakerSelect.innerHTML = '<option value="">-- Select --</option>';
-      });
+  if (completeBtn) {
+    completeBtn.addEventListener('click', function () {
+      if (!currentMediaId || completeBtn.disabled) return;
+      showMessage('Completing…');
+      postComplete(currentMediaId)
+        .then(function () {
+          showMessage('Done. Returning to list.');
+          segmentSectionEl.style.display = 'none';
+          currentMediaId = null;
+          currentSegmentId = null;
+          loadFiles();
+        })
+        .catch(function (e) {
+          showMessage(e.message, true);
+        });
+    });
   }
 
-  function getResolutionBody() {
-    const resolution = document.querySelector('input[name="resolution"]:checked');
-    const res = resolution ? resolution.value : '';
-    if (res === 'existing') {
-      const speakerId = existingSpeakerSelect.value;
-      if (!speakerId) return null;
-      return { mediaId: currentMediaId, segmentId: currentSegmentId, resolution: 'existing', speakerId: speakerId };
-    }
-    if (res === 'new') {
-      const name = newSpeakerNameEl.value.trim();
-      if (!name) return null;
-      return { mediaId: currentMediaId, segmentId: currentSegmentId, resolution: 'new', name: name };
-    }
-    if (res === 'placeholder') {
-      const name = placeholderNameEl.value.trim();
-      if (!name) return null;
-      return { mediaId: currentMediaId, segmentId: currentSegmentId, resolution: 'placeholder', name: name };
-    }
-    return null;
+  if (identifyFilterEl) {
+    identifyFilterEl.addEventListener('input', function () {
+      renderIdentifySpeakerList(identifyFilterEl.value);
+    });
   }
-
-  resolveBtn.addEventListener('click', function () {
-    if (!currentMediaId || !currentSegmentId) {
-      showMessage('Select a segment first.', true);
-      return;
-    }
-    const body = getResolutionBody();
-    if (!body) {
-      showMessage('Choose resolution type and fill the field.', true);
-      return;
-    }
-    showMessage('Resolving…');
-    postResolve(body)
-      .then(function () {
-        showMessage('Resolved. Reloading segments…');
-        return getSegments(currentMediaId);
-      })
-      .then(function (data) {
-        renderSegmentList(data.segments);
-        showMessage('Resolved. When all segments are resolved, the file will move to Videos automatically.');
-        const allResolved = data.segments.length > 0 && data.segments.every(function (s) { return s.speakerId; });
-        if (allResolved) {
-          showMessage('All segments resolved. File will move to Videos automatically.');
-          setTimeout(function () {
-            loadFiles();
-            segmentSectionEl.style.display = 'none';
-          }, 1500);
-        }
-      })
-      .catch(function (e) {
-        showMessage(e.message, true);
-      });
-  });
+  if (identifySkipBtn) {
+    identifySkipBtn.addEventListener('click', function () {
+      doResolvePlaceholder();
+    });
+  }
+  if (identifyCancelBtn) {
+    identifyCancelBtn.addEventListener('click', function () {
+      closeIdentifyPopup();
+    });
+  }
 
   function loadFiles() {
     showMessage('Loading…');
     getSpeakersFiles()
       .then(function (data) {
         renderFileList(data.items);
-        showMessage(data.total === 0 ? 'No files in unknown-speakers step.' : '');
+        showMessage(data.total === 0 ? 'No videos need speaker identification.' : '');
       })
       .catch(function (e) {
         showMessage(e.message, true);

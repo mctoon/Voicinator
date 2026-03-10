@@ -21,6 +21,8 @@ Auto-generated from all feature plans. Last updated: 2026-03-07
 - Filesystem only (paired folders, no DB) (005-configurable-chunk-size)
 - Python 3.11+ (per run.sh; 3.10–3.13 for NeMo) + Flask, tomllib/tomli for voicinator.toml; existing pipeline services (step6_summarize currently stub) (006-pipeline-summarize)
 - Filesystem only; config in repo-root `voicinator.toml` (no database) (006-pipeline-summarize)
+- Python 3.11+ (backend), JavaScript (frontend; no framework) + Flask (backend), existing pipeline services (step3/step4 output: transcript_words.json, transcript.txt, segments.json), pathlib, JSON/file I/O (007-webui-to-identify-unknown-speakers)
+- Filesystem only—paired folders (transcript.txt, transcript_words.json, segments.json), speaker_resolutions.json (resolver), no database (007-webui-to-identify-unknown-speakers)
 
 - Python 3.x (e.g. 3.11+); version documented in run.sh and requirements.tx + See research.md; likely FastAPI or Flask for search API, SQLAlchemy or async equivalent for DB, PostgreSQL client; embedding/vector lib for meaning-based tier (012-phrase-search-tiers)
 
@@ -40,9 +42,9 @@ cd src [ONLY COMMANDS FOR ACTIVE TECHNOLOGIES][ONLY COMMANDS FOR ACTIVE TECHNOLO
 Python 3.x (e.g. 3.11+); version documented in run.sh and requirements.tx: Follow standard conventions
 
 ## Recent Changes
+- 007-webui-to-identify-unknown-speakers: Added Python 3.11+ (backend), JavaScript (frontend; no framework) + Flask (backend), existing pipeline services (step3/step4 output: transcript_words.json, transcript.txt, segments.json), pathlib, JSON/file I/O
+- 007-webui-to-identify-unknown-speakers: Added Python 3.11+ (backend), JavaScript (frontend; no framework) + Flask (backend), existing pipeline services (step3/step4 output: transcript_words.json, transcript.txt, segments.json), pathlib, JSON/file I/O
 - 006-pipeline-summarize: Added Python 3.11+ (per run.sh; 3.10–3.13 for NeMo) + Flask, tomllib/tomli for voicinator.toml; existing pipeline services (step6_summarize currently stub)
-- 005-configurable-chunk-size: Added Python 3.11+ (per run.sh and requirements; 3.10–3.13 for NeMo) + Flask, faster-whisper (large-v3), NeMo MSDD (step 4), pydub/librosa for audio; TOML (tomllib/tomli) for config
-- 013-auto-pipeline-processing: Added Python 3.11+ (same as repo and 002) + Flask (existing); same as 002 (faster-whisper, pipeline services). New: background loop (thread or scheduler) with configurable scan interval (e.g. 30–60 s to satisfy “within 1 minute” discovery).
 
 
 <!-- MANUAL ADDITIONS START -->

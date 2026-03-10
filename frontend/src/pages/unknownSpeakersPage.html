@@ -11,6 +11,7 @@
     <nav class="nav-sidebar" aria-label="Main navigation">
       <ul>
         <li><a href="/">Videos</a></li>
+        <li><a href="/pages/unknownSpeakersPage.html">Unknown Speakers</a></li>
         <li><a href="/summarizationConfigPage.html">Config</a></li>
       </ul>
     </nav>
@@ -25,23 +26,30 @@
       <div id="message" class="message" aria-live="polite"></div>
     </section>
     <section id="segmentSection" class="segment-section" style="display: none;">
-      <h2>Segments</h2>
-      <div id="segmentList" class="segment-list"></div>
-      <div id="segmentPlayer" class="segment-player">
-        <audio id="segmentAudio" controls></audio>
+      <div class="identify-view-layout">
+        <div class="transcript-scroll">
+          <h2>Transcript</h2>
+          <div id="transcriptPanel" class="transcript-panel transcript-txt-style" aria-label="Transcript by speaker and time"></div>
+        </div>
+        <div class="playback-bar" aria-label="Playback controls">
+          <audio id="fullMedia" controls></audio>
+          <div class="playback-actions">
+            <button type="button" id="completeBtn" disabled>Complete identification</button>
+            <button type="button" id="backToListBtn">Back to list</button>
+          </div>
+        </div>
       </div>
-      <div id="resolvePanel" class="resolve-panel">
-        <h3>Resolve speaker</h3>
-        <label><input type="radio" name="resolution" value="existing"> Existing speaker</label>
-        <select id="existingSpeakerSelect"></select>
-        <br>
-        <label><input type="radio" name="resolution" value="new"> New speaker</label>
-        <input type="text" id="newSpeakerName" placeholder="Name">
-        <br>
-        <label><input type="radio" name="resolution" value="placeholder"> Placeholder</label>
-        <input type="text" id="placeholderName" placeholder="Placeholder name">
-        <br>
-        <button id="resolveBtn" type="button">Resolve</button>
+      <div id="identifyPopup" class="identify-popup" role="dialog" aria-label="Identify speaker" style="display: none;">
+        <div class="identify-popup-inner">
+          <h3 id="identifyPopupTitle">Identify speaker</h3>
+          <label for="identifyFilter">Filter or type new name (Enter to create if unique)</label>
+          <input type="text" id="identifyFilter" placeholder="Type to filter or new name…" autocomplete="off">
+          <div id="identifySpeakerList" class="identify-speaker-list" role="listbox"></div>
+          <div class="identify-popup-actions">
+            <button type="button" id="identifySkipBtn">Skip / Not identify</button>
+            <button type="button" id="identifyCancelBtn">Cancel</button>
+          </div>
+        </div>
       </div>
     </section>
       </main>
