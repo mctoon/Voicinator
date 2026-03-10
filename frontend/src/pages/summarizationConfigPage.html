@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Config</title>
+  <link rel="stylesheet" href="/styles/main.css">
+</head>
+<body>
+  <div class="app-layout">
+    <nav class="nav-sidebar" aria-label="Main navigation">
+      <ul>
+        <li><a href="/">Videos</a></li>
+        <li><a href="/summarizationConfigPage.html" class="active">Config</a></li>
+      </ul>
+    </nav>
+    <div class="page-content">
+      <header class="page-header">
+        <h1>Config</h1>
+      </header>
+      <main class="page-main">
+    <section>
+      <h2>Remote LLMs</h2>
+      <p>Pick a <strong>provider</strong> (URLs are in <code>llm_providers.toml</code>), enter your <strong>API key</strong>, click <strong>Fetch models</strong> to load models from the provider, then choose a <strong>model</strong>. The LLM name is set automatically as <em>Provider:Model</em>. Use <strong>Test</strong> to verify the endpoint works.</p>
+      <div id="remoteLlmsContainer"></div>
+      <button type="button" id="addRemoteLlmBtn">Add remote LLM</button>
+    </section>
+    <section>
+      <h2>Summarization parts</h2>
+      <p>For each part, choose an LLM and set <strong>system prompt</strong> and <strong>user prompt</strong>. Use <code>{{TRANSCRIPT}}</code> in either prompt to insert the video transcript. Order here is the order in the generated summary file. Use Up/Down to reorder.</p>
+      <div id="summarizationsContainer"></div>
+      <button type="button" id="addPartBtn">Add part</button>
+    </section>
+    <div id="message" class="message" aria-live="polite"></div>
+    <button type="button" id="saveBtn">Save to voicinator.toml</button>
+      </main>
+    </div>
+  </div>
+  <script src="/services/pipelineConfigApi.js"></script>
+  <script src="/pages/summarizationConfigPage.js"></script>
+</body>
+</html>

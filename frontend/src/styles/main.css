@@ -1,4 +1,27 @@
-/* Inbox Queue UI */
+/* App layout: left nav + main content */
+.app-layout { display: flex; min-height: 100vh; }
+.nav-sidebar {
+  width: 12rem;
+  flex-shrink: 0;
+  background: #f5f5f5;
+  border-right: 1px solid #ddd;
+  padding: 1rem 0;
+}
+.nav-sidebar ul { list-style: none; padding: 0; margin: 0; }
+.nav-sidebar li { margin: 0; }
+.nav-sidebar a {
+  display: block;
+  padding: 0.5rem 1rem;
+  color: #333;
+  text-decoration: none;
+}
+.nav-sidebar a:hover { background: #eee; }
+.nav-sidebar a.active { font-weight: bold; background: #e0e0e0; }
+.page-content { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.page-content .page-header { margin-bottom: 1rem; padding: 0 1rem; }
+.page-content .page-main { flex: 1; max-width: 60rem; margin: 0 auto; padding: 0 1rem; width: 100%; }
+
+/* Videos / channel list UI */
 .page-header { margin-bottom: 1rem; }
 .tab-bar { display: flex; gap: 0.25rem; margin-bottom: 1rem; }
 .tab-btn.active { font-weight: bold; }
@@ -32,3 +55,8 @@
 .resolve-panel label { margin-right: 0.5rem; }
 .resolve-panel input[type="text"], .resolve-panel select { margin: 0 0.5rem 0.5rem 0; }
 #resolveBtn { margin-top: 0.5rem; cursor: pointer; }
+
+/* Config page */
+.config-row { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; }
+.config-row input, .config-row select { min-width: 8rem; }
+.llm-name-display { font-weight: bold; min-width: 10rem; }

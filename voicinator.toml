@@ -1,10 +1,53 @@
-# Voicinator master config (bootstrap). See voicinator.toml.example.
-
 [server]
 port = 8042
 
-# [inbox]
-# configPath = "inbox_queue_config.toml"
+[inbox]
 
 [pipeline]
+basePaths = []
+scanIntervalSeconds = 60
+autoProcessingEnabled = true
 chunkDurationSeconds = 20
+chunkDurationDefaulted = false
+
+[[pipeline.summarizations]]
+name = "Clickbait-style title"
+llm = "Local:gemma3:4b"
+systemPrompt = "You are an expert video clickbait title generator. Your goal is to produce a funny, ridiculous, subjective gen-Z clickbait title that captures the essence of the content.  Use hashtags and emojis.\n\nSummarize the following transcript in one clickbait title:\n- Focus on the core message, main points key argument, or conclusion.\n- Use trendy, gen-Z language."
+userPrompt = "Transcript:\n{{TRANSCRIPT}}\n\nCRITICAL INSTRUCTION: Your response must contain ONLY the title. Do not add any prefixes (like \"Summary:\"), introductions, conclusions, notes, bullet points unless they fit naturally in the title, or any other extra content. Start and end directly with the title. No markdown headers."
+
+[[pipeline.summarizations]]
+name = "One-sentence summary"
+llm = "Local:gemma3:4b"
+systemPrompt = "You are an expert video transcript summarizer. Your goal is to produce a clean, professional, objective single sentence summary that captures the essence of the content.\n\nSummarize the following transcript:\n- Focus on the core message, main points, key arguments, evidence presented, and conclusions.\n- Make it concise yet comprehensive.\n- Use clear, natural language."
+userPrompt = "Transcript:\n{{TRANSCRIPT}}\n\nCRITICAL INSTRUCTION: Your response must contain ONLY the summary sentence. Do not add any prefixes (like \"Summary:\"), introductions, conclusions, notes, bullet points unless they fit naturally in the summary, or any other extra content. Start and end directly with the summary sentence. No markdown headers."
+
+[[pipeline.summarizations]]
+name = "Paragraph overview"
+llm = "Local:gemma3:4b"
+systemPrompt = "You are an expert video transcript summarizer. Your goal is to produce a clean, professional, objective summary paragraph that captures the essence of the content.\n\nSummarize the following transcript:\n- Focus on the core message, main points, key arguments, evidence presented, and conclusions.\n- Make it concise yet comprehensive.\n- Use clear, natural language."
+userPrompt = "Transcript:\n{{TRANSCRIPT}}\n\nCRITICAL INSTRUCTION: Your response must contain ONLY the summary text. Do not add any prefixes (like \"Summary:\"), introductions, conclusions, notes, bullet points unless they fit naturally in the summary, or any other extra content. Start directly with the paragraph's first sentence and end with the last. No markdown headers."
+
+[[pipeline.summarizations]]
+name = "Interesting passages"
+llm = "Grok:grok-4-0709"
+systemPrompt = "You are an expert video transcript summarizer. Your goal is to identify conflicts or verbal fights in the transcript.  Or to identify interesting, novel, compelling sections in the transcript.\n\nIdentify zero to many sections that meet these criteria.  If there are no conflicts, interesting, novel, compelling sections report \"Nothing to report\"\n\nFor each identified section produce a single sentence summary including the names of any participants if the names are known.  List the start and stop times of the section.\nThen produce a summary of the section.  This can be 1 or more paragraphs, not too long, enough to understand what is going on.\n\n- Focus on the core message, main points, key arguments, evidence presented, and conclusions.\n- Remove spoken fillers, repetitions, and tangents while preserving meaning and tone where relevant.\n- Use clear, natural language."
+userPrompt = "Transcript:\n{{TRANSCRIPT}}\n\nCRITICAL INSTRUCTION: Your response must contain ONLY the summary text. Do not add any prefixes (like \"Summary:\"), introductions, conclusions, notes, bullet points unless they fit naturally in the summary, or any other extra content. Start directly with the summary's first sentence and end with the last. You may use markdown to separate the sections and denote title, start/stop times."
+
+[[pipeline.summarizations]]
+name = "Section summary with timestamps"
+llm = "Grok:grok-4-1-fast-reasoning"
+systemPrompt = "You are an expert video transcript summarizer. Your goal is to produce a clean, professional, objective summary that captures the essence of the content.\n\nSummarize the following transcript:\n- Focus on the core message, main points, key arguments, evidence presented, and conclusions.\n- Organize into well-structured paragraphs for readability.\n- Make it concise yet comprehensive (roughly 20% of original length or focused on salient information).\n- Remove spoken fillers, repetitions, and tangents while preserving meaning and tone where relevant.\n- Use clear, natural language."
+userPrompt = "Transcript:\n{{TRANSCRIPT}}\n\nCRITICAL INSTRUCTION: Your response must contain ONLY the summary text. Do not add any prefixes (like \"Summary:\"), introductions, conclusions, notes, bullet points unless they fit naturally in the summary, or any other extra content. Start directly with the summary's first sentence and end with the last. No markdown headers."
+
+[[llms]]
+name = "Grok:grok-4-1-fast-reasoning"
+type = "remote"
+provider = "Grok"
+model = "grok-4-1-fast-reasoning"
+
+[[llms]]
+name = "Grok:grok-4-0709"
+type = "remote"
+provider = "Grok"
+model = "grok-4-0709"

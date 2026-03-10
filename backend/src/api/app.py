@@ -60,6 +60,10 @@ def createApp() -> Flask:
     def unknownSpeakersPage():
         return app.send_static_file("pages/unknownSpeakersPage.html")
 
+    @app.route("/summarizationConfigPage.html")
+    def summarizationConfigPage():
+        return app.send_static_file("pages/summarizationConfigPage.html")
+
     return app
 
 

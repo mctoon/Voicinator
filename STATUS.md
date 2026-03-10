@@ -1,6 +1,6 @@
 # Voicinator – Project status
 
-**Last updated**: 2026-03-09
+**Last updated**: 2026-03-10
 
 ## Current focus: 003 Sister files into folder
 
@@ -28,6 +28,7 @@ Voicinator is a local, quality-first voice fingerprinting and transcription stac
 - **UI**: `/unknownSpeakersPage.html` – list files, select file → segments, play segment, resolve speaker; automatic move when all resolved.
 - **Config**: Optional `[pipeline] basePaths` and `unknownSpeakersStepName` in `voicinator.toml`; if basePaths empty, pipeline uses inbox tab paths. Speaker resolutions stored in `data/speaker_resolutions.json` (stub until real DB).
 - **Deps**: `faster-whisper` (step 3); optional `nemo_toolkit[asr]` for step 4 (NeMo MSDD).
+- **Per-media log**: Each media file has a `pipeline.log` in its sidecar (paired) folder. The pipeline writes run start/end, step start/end (with duration and success/error), move results, and failures; all lines are UTC ISO8601 timestamped. The log file moves with the sidecar when the file advances to the next step.
 
 ## 003 Sister files into folder
 

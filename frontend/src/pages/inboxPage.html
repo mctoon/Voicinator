@@ -5,22 +5,32 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta http-equiv="Content-Language" content="en">
   <meta name="google" content="notranslate">
-  <title>Inbox Queue</title>
+  <title>Videos</title>
   <link rel="stylesheet" href="/styles/main.css">
 </head>
 <body>
-  <header class="page-header">
-    <h1>Inbox Queue</h1>
-  </header>
-  <main class="page-main">
-    <div id="tabsContainer" class="tabs-container"></div>
-    <section class="channels-section">
-      <h2>Channels</h2>
-      <div id="channelList" class="channel-list-wrap"></div>
-      <div id="channelPagination" class="pagination"></div>
-      <div id="message" class="message" aria-live="polite"></div>
-    </section>
-  </main>
+  <div class="app-layout">
+    <nav class="nav-sidebar" aria-label="Main navigation">
+      <ul>
+        <li><a href="/" class="active">Videos</a></li>
+        <li><a href="/summarizationConfigPage.html">Config</a></li>
+      </ul>
+    </nav>
+    <div class="page-content">
+      <header class="page-header">
+        <h1>Videos</h1>
+      </header>
+      <main class="page-main">
+        <div id="tabsContainer" class="tabs-container"></div>
+        <section class="channels-section">
+          <h2>Channels</h2>
+          <div id="channelList" class="channel-list-wrap"></div>
+          <div id="channelPagination" class="pagination"></div>
+          <div id="message" class="message" aria-live="polite"></div>
+        </section>
+      </main>
+    </div>
+  </div>
   <script src="/services/apiClient.js"></script>
   <script src="/components/tabBar.js"></script>
   <script src="/components/channelList.js"></script>
